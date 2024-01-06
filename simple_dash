@@ -1,0 +1,717 @@
+kiosk_mode:
+  hide_header: false
+  hide_overflow: false
+views:
+  - theme: mytheme
+    card_mod:
+      style: |
+        ha-app-layout {
+          background: url('/local/backgrounds/wall.jpg') no-repeat center center fixed;
+          background-size: cover;
+        }
+    title: web
+    icon: mdi:web
+    type: custom:grid-layout
+    badges: []
+    cards:
+      - type: custom:stack-in-card
+        card_mod:
+          style: |
+            ha-card 
+            margin-top: 5px;
+            background: transparent !important;
+            background-color: transparent !important;
+            border-radius: 0px;
+            }
+        cards:
+          - type: custom:stack-in-card
+            card_mod:
+              style: |
+                ha-card {
+                margin-top: 0px;
+                border-radius: 0px;
+                background-color: transparent !important;
+                background: transparent !important;
+                z-index: 1;
+                }
+            cards:
+              - type: custom:clock-weather-card
+                card_mod:
+                  style: |
+                    ha-card 
+                    margin-top: 0px;
+                    box-shadow: none;
+                    border-radius: 0px;
+                    background-color: transparent !important;
+                    z-index: 2;
+                    }
+                entity: weather.tomorrow_io_home_daily
+                title: null
+                sun_entity: sun.sun
+                temperature_sensor: sensor.ambient_outside_temperature
+                weather_icon_type: fill
+                animated_icon: true
+                forecast_rows: 5
+                locale: en-US
+                time_format: 24
+                date_pattern: null
+                hide_today_section: false
+                hide_forecast_section: true
+                hide_clock: false
+                hide_date: false
+                hourly_forecast: false
+                use_browser_time: true
+              - type: custom:mini-graph-card
+                tap_action:
+                  action: navigate
+                  navigation_path: '#therm'
+                entities:
+                  - entity: sensor.ambient_local_temp
+                    name: Temp
+                    color: green
+                  - entity: sensor.ambient_local_humidity
+                    name: Humidity
+                    color: '#3399ff'
+                    y_axis: secondary
+                height: 50
+                hours_to_show: 24
+                line_width: 3
+                font_size: 50
+                animate: true
+                show:
+                  name: false
+                  icon: false
+                  state: false
+                  legend: false
+                  fill: fade
+                card_mod:
+                  style: |
+                    ha-card {
+                      z-index: 1;
+                      background-color: transparent;
+                      position: absolute !important;
+                      height: 100%;
+                      width: 100%;
+                      right: 0px;
+                      left: 0px;
+                      top: 0px;
+                      --ha-card-border-width: 0;
+                      border-radius: 0px;
+                    }
+                    ha-card:after 
+                      border-radius: 0px;
+                      background-color: transparent;
+                      content: "";
+                      position: absolute;
+                      width: 100%;
+                      height: 100%;
+                      #background: linear-gradient(to right, var(--card-background-color) 0%, transparent);
+                    }
+          - type: markdown
+            card_mod:
+              style: |
+                ha-card {
+                margin-top: 10px;
+                text-align: center;
+                }
+            icon: mdi:blank
+            content: >
+              {% set hour = now().hour %} {% set inside_temp =
+              states('sensor.ambient_local_inside_temp') %} {% set hvac_mode = 
+              states('climate.thermostat') %} {% set target_temp =
+              state_attr('climate.thermostat', 'temperature') %}
+
+              {% if hvac_mode != 'off' %}
+                {% if hour < 5 %}
+                  Good night, it's {{ inside_temp }}°F inside, {{ hvac_mode }}ing to {{ target_temp }}°F.
+                {% elif hour < 12 %}
+                  Good morning, it's {{ inside_temp }}°F inside, {{ hvac_mode }}ing to {{ target_temp }}°F.
+                {% elif hour < 18 %}
+                  Good afternoon, it's {{ inside_temp }}°F inside, {{ hvac_mode }}ing to {{ target_temp }}°F.
+                {% else %}
+                  Good evening, it's {{ inside_temp }}°F inside, {{ hvac_mode }}ing to {{ target_temp }}°F.
+                {% endif %}
+              {% else %}
+                {% if hour < 5 %}
+                  Good night, it's {{ inside_temp }}°F inside.
+                {% elif hour < 12 %}
+                  Good morning, it's {{ inside_temp }}°F inside.
+                {% elif hour < 18 %}
+                  Good afternoon, it's {{ inside_temp }}°F inside.
+                {% else %}
+                  Good evening, it's {{ inside_temp }}°F inside.
+                {% endif %}
+                {% endif %}
+          - type: entities
+            entities:
+              - type: divider
+                style:
+                  height: 1px
+                  width: 95%
+                  margin-left: auto
+                  margin-right: auto
+                  background: '#62717b'
+              - type: custom:template-entity-row
+                name: Today
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: ' '
+                      dismissable: true
+                      content:
+                        type: custom:stack-in-card
+                        cards:
+                          - type: calendar
+                            entities:
+                              - calendar.joe
+                            initial_view: dayGridMonth
+                          - type: custom:auto-entities
+                            card:
+                              type: entities
+                              title: Tasks
+                              state_color: true
+                            filter:
+                              include:
+                                - entity_id: input_boolean.trash_cans_out
+                                  state: 'on'
+                                - entity_id: input_boolean.trash_cans_in
+                                  state: 'on'
+                                - entity_id: input_boolean.mop_attachment_on
+                                  state: 'on'
+                                - entity_id: input_boolean.mop_attachment_off
+                                  state: 'on'
+                                - entity_id: input_boolean.sprinkler_valve_on
+                                  state: 'on'
+                                - entity_id: input_boolean.sprinkler_valve_closed
+                                  state: 'on'
+                          - type: entities
+                            entities:
+                              - sensor.breville_filter
+                image: /local/icon/calendar.png
+                state: >
+                  {% set todo_state = states('todo.to_do') %} {% set next_event
+                  = state_attr('calendar.joe', 'start_time') %} {% if next_event
+                  %}
+                    Next: {{ strptime(next_event, '%Y-%m-%d %H:%M:%S').strftime('%B %d') }},
+                  {% else %}
+
+
+                  {% endif %} Todo: {{ todo_state }}
+              - type: custom:template-entity-row
+                card_mod:
+                  style: |
+                    ha-card 
+                    box-shadow: none;
+                    border-radius: 0px;
+                    background-color: transparent !important;
+                    z-index: 1;
+                    }
+                name: Control
+                tap_action:
+                  action: navigate
+                  navigation_path: '#lights'
+                'hold_action:':
+                  action: navigate
+                  navigation_path: '#lights2'
+                image: /local/icon/switches.png
+                state: >
+                  {% set on_lights = expand('group.lights') |
+                  selectattr('state', 'eq', 'on') | list | count %} {% set
+                  fans_state = expand('group.fans') | selectattr('state', 'eq',
+                  'on') | list | count %}
+
+                  {% if on_lights > 0 %} {{ on_lights }} lights, {% endif %}  {%
+                  if fans_state > 0 %} {{ fans_state }} fans {% endif %}
+              - type: custom:template-entity-row
+                name: Security
+                tap_action:
+                  action: navigate
+                  navigation_path: '#front'
+                hold_action:
+                  action: navigate
+                  navigation_path: '#back'
+                image: /local/icon/house.png
+                state: >
+                  {% set door_state = states('sensor.door_lock') %} {% set
+                  garage_state = states('cover.garage_door_controller') %} {%
+                  set on_win = expand('group.windows') | selectattr('state',
+                  'eq', 'on') | list | count %} {% set sensors =
+                  expand('group.occupancy') | selectattr('state', 'eq', 'on') %}
+                  {% if sensors %} Occupied, {% else %}
+
+                  {% endif %} {% if on_win > 0 %} {{ on_win }} Windows, {% endif
+                  %}
+
+                  {% if door_state == 'Unlocked' %} Door: Unlocked, {% endif %}
+
+                  {% if door_state == 'Open' %} Door: Open, {% endif %}
+
+                  {% if garage_state == 'Open' %} Garage: Open, {% endif %}
+              - type: custom:template-entity-row
+                name: Utility
+                image: /local/icon/vac.png
+                tap_action:
+                  action: navigate
+                  navigation_path: '#utility'
+                state: >
+                  {% set vacuum1_state = states('vacuum.downstairs') %} {% set
+                  vacuum2_state = states('vacuum.vacuum') %} {% set
+                  vacuum3_state = states('vacuum.chummy') %} {% set
+                  sprinkler_state = states('binary_sensor.opensprinkler') %} {%
+                  set ice_machine_state =
+                  states('switch.d828c9d981cf_oim_power') %} {% set washer_state
+                  = states('binary_sensor.washeron') %}
+
+                  {% if vacuum1_state in ['docked'] and vacuum2_state in
+                  ['docked'] and vacuum3_state in ['docked'] and sprinkler_state
+                  in ['off'] and ice_machine_state in ['off'] and washer_state
+                  in ['off'] %} Idle {% else %}
+                    {% if vacuum1_state not in ['docked'] %} F1: {{ vacuum1_state }}, {% endif %}
+                    {% if vacuum2_state not in ['docked'] %} F2: {{ vacuum2_state }}, {% endif %}
+                    {% if vacuum3_state not in ['docked'] %} Garage: {{ vacuum3_state }}, {% endif %}
+                    {% if sprinkler_state not in ['off'] %} Sprinkler: {{ sprinkler_state }}, {% endif %}
+                    {% if ice_machine_state not in ['off'] %} Ice Machine: {{ ice_machine_state }}, {% endif %}
+                    {% if washer_state not in ['off'] %} Washer: {{ washer_state }}, {% endif %}
+                    {% endif %}
+              - type: custom:stack-in-card
+                card_mod:
+                  style: |
+                    ha-card {
+                     box-shadow: none;
+                     border-width: 0px;
+                     border-radius: 0px;
+                     background-color: transparent !important;
+                     }
+                cards:
+                  - type: custom:template-entity-row
+                    name: Music
+                    entity: media_player.office
+                    image: /local/office_media_player_picture.jpg
+                    tap_action:
+                      action: navigate
+                      navigation_path: '#media'
+                    state: >
+                      {% if is_state('media_player.office', 'playing') %}
+
+                      {{ state_attr('media_player.office', 'media_title') }} by
+                      {{ state_attr('media_player.office', 'media_artist') }}
+
+                      {% else %}
+
+                      Idle
+
+                      {% endif %}
+                  - type: custom:timer-bar-card
+                    sync_issues: ignore
+                    entity: timer.track
+                    layout: full_row
+                    text_width: 0px
+                    card_mod:
+                      style: |
+                        ha-card {
+                         margin-top: -10px;
+                         }
+          - type: custom:mini-graph-card
+            card_mod:
+              style: |
+                ha-card {
+                 margin-top: -10px;
+                 }
+            name: null
+            icon: mdi:solar-power
+            entities:
+              - entity: sensor.my_home_solar_power
+                color: green
+                name: solar
+                show_state: true
+              - entity: sensor.meter_min
+                color: orange
+                name: energy
+                show_state: true
+            height: 50
+            font_size: 60
+            line_width: 3
+            animate: true
+            hours_to_show: 12
+            show:
+              icon: false
+              fill: true
+              name: false
+              legend: false
+              state: true
+            style: |
+              ha-card {
+                background-color: transparent;
+                text-align: center;
+              }
+          - type: custom:mini-graph-card
+            name: Water
+            icon: mdi:pipe-valve
+            entities:
+              - entity: sensor.flume_sensor_home_current
+                name: Water now
+                color: green
+                show_state: true
+                show_line: true
+                show_points: true
+                y_axis: secondary
+              - entity: sensor.flume_sensor_home_current_day
+                color: orange
+                name: Water day
+                show_points: true
+                show_state: true
+            hours_to_show: 24
+            height: 50
+            font_size: 60
+            line_width: 3
+            animate: true
+            show:
+              icon: false
+              fill: true
+              name: false
+              legend: false
+              state: true
+            style: |
+              ha-card {
+                background-color: transparent;
+                text-align: center;
+              }
+          - type: custom:mini-graph-card
+            name: Internet
+            icon: mdi:web
+            entities:
+              - entity: sensor.rbr850_downlink_bandwidth
+                name: down
+                color: orange
+                show_state: true
+              - entity: sensor.rbr850_uplink_bandwidth
+                name: up
+                color: green
+                show_state: true
+            hours_to_show: 12
+            height: 50
+            font_size: 60
+            line_width: 3
+            animate: true
+            show:
+              graph: bar
+              icon: false
+              fill: true
+              name: false
+              legend: false
+              state: true
+            style: |
+              ha-card {
+                background-color: transparent;
+                text-align: center;
+              }
+      - type: custom:stack-in-card
+        card_mod:
+          style: |
+            ha-card {
+             background-color: rgba(1,1,1, .1);
+             }
+        cards:
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#lights'
+            auto_close: '15000'
+            margin_top_mobile: '-20px'
+            bg_color: 'transparent '
+          - type: entities
+            entities:
+              - light.guest_room_ceiling_fan_2
+              - type: custom:slider-entity-row
+                entity: fan.guest_room_ceiling_fan
+              - type: custom:slider-entity-row
+                entity: fan.family_room_ceiling_fan
+              - type: custom:slider-entity-row
+                entity: light.porchbulb
+              - type: custom:slider-entity-row
+                entity: light.patio_strip_lights
+              - type: custom:slider-entity-row
+                entity: light.family_room_main_lights
+              - type: custom:slider-entity-row
+                entity: light.kitchen_main_lights
+              - type: custom:slider-entity-row
+                entity: light.cabinets
+              - type: custom:slider-entity-row
+                entity: light.pantry_main_lights
+              - type: custom:slider-entity-row
+                entity: light.living_room_main_lights
+              - type: custom:slider-entity-row
+                entity: light.hallway_main_lights
+              - type: custom:slider-entity-row
+                entity: light.garage_main_lights
+          - type: custom:mushroom-chips-card
+            card_mod:
+              style: |
+                ha-card {
+                  #background: linear-gradient(to top, #607D8B, #607D8Bb3) !important;
+                  --chip-background: rgba(1,1,1, .1) !important;
+                  box-shadow: none !important; 
+                  --chip-border-radius: 10%;
+                }
+            chips:
+              - type: entity
+                entity: switch.back_wall_lights
+                icon: mdi:wall
+                content_info: state
+              - type: entity
+                entity: switch.byard_spot_light
+                icon: mdi:spotlight
+                content_info: state
+                name: Door
+              - type: entity
+                entity: switch.fountains
+                icon: mdi:fountain
+              - type: entity
+                entity: switch.fountain_light
+                icon: mdi:led-strip-variant
+            alignment: center
+          - type: custom:mushroom-chips-card
+      - type: vertical-stack
+        cards:
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#media'
+            auto_close: '15000'
+            margin_top_mobile: '-20px'
+            bg_color: 'transparent '
+            margin: 7px
+          - type: custom:stack-in-card
+            cards:
+              - type: custom:mini-media-player
+                mini-media-player-button-color: transparent
+                entity: media_player.office
+                source: icon
+                info: short
+                artwork: material
+                idle_view:
+                  when_idle: true
+                  when_standby: true
+                  when_paused: false
+                hide:
+                  icon: true
+                  power: true
+                  source: true
+                name: Office Main
+                speaker_group:
+                  entities:
+                    - entity_id: media_player.family_room
+                      name: Family room
+                    - entity_id: media_player.front_room
+                      name: Front room
+                    - entity_id: media_player.move
+                      name: Move
+                    - entity_id: media_player.sonos_roam_2
+                      name: Roam
+                    - entity_id: media_player.patio
+                      name: Patio
+                    - entity_id: media_player.garage
+                      name: Garage
+                  platform: sonos
+                  show_group_count: true
+                  sync_volume: true
+                  expanded: true
+      - type: custom:stack-in-card
+        cards:
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#therm'
+            auto_close: '15000'
+            margin_top_mobile: '-20px'
+            bg_color: 'transparent '
+          - type: thermostat
+            entity: climate.thermostat
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - heat_cool
+                  - heat
+                  - cool
+                  - 'off'
+              - type: climate-preset-modes
+                style: dropdown
+                preset_modes:
+                  - Home
+                  - Away
+                  - Sleep
+                  - preload
+                  - high
+                  - afternoon
+                  - morning
+      - type: vertical-stack
+        cards:
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#lights2'
+            auto_close: '15000'
+            margin_top_mobile: '-20px'
+            bg_color: 'transparent '
+            margin: 7px
+          - type: entities
+            entities:
+              - type: custom:slider-entity-row
+                entity: light.stairs_main_lights
+              - type: custom:slider-entity-row
+                entity: light.upstairs_hallway_main_lights
+              - type: custom:slider-entity-row
+                entity: light.master_bedroom_table_lamps
+              - light.zacks_ceiling_fan_2
+              - type: custom:slider-entity-row
+                entity: fan.zacks_ceiling_fan
+              - type: custom:slider-entity-row
+                entity: fan.zack
+                name: Air
+              - light.ceiling_fan
+              - type: custom:slider-entity-row
+                entity: fan.ceiling_fan
+              - light.master_ceiling_fan_2
+              - type: custom:slider-entity-row
+                entity: fan.master_ceiling_fan
+      - type: custom:stack-in-card
+        cards:
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#front'
+            auto_close: '25000'
+            margin_top_mobile: '-20px'
+            bg_color: 'transparent '
+            margin: 7px
+          - type: picture-glance
+            title: Door
+            camera_image: camera.ring_door
+            camera_view: live
+            entities:
+              - entity: sensor.door_lock
+                tap_action:
+                  action: call-service
+                  service: lock.lock
+                  target:
+                    entity_id: lock.schlage_lock
+                    data: {}
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - type: divider
+          - type: picture-glance
+            title: Driveway
+            camera_image: camera.ring_driveway
+            camera_view: live
+            entities:
+              - entity: sensor.door_lock
+                tap_action:
+                  action: call-service
+                  service: cover.toggle
+                  target:
+                    entity_id: cover.garage_door_controller
+                    data: {}
+        style: |
+          ha-card {
+          border-radius: 25px;
+          border-width: 2px;
+          border-style: solid;
+          border-color: black;
+          }
+      - type: custom:stack-in-card
+        card_mod:
+          style: |
+            ha-card {
+             background-color: rgba(1,1,1, .1);
+             }
+        cards:
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#utility'
+            auto_close: '15000'
+            margin_top_mobile: '-20px'
+            bg_color: 'transparent '
+          - type: entities
+            entities:
+              - vacuum.downstairs
+              - vacuum.vacuum
+              - entity: vacuum.chummy
+                name: garage
+              - switch.grass_station_enabled
+              - switch.drip_station_enabled
+              - entity: switch.d828c9d981cf_oim_power
+                name: make ice
+                icon: mdi:cube-unfolded
+              - entity: switch.adguardfilter
+                name: AdGuard
+                icon: mdi:shield-check
+              - entity: sensor.xteve_status
+                name: Xteve
+                icon: mdi:television-box
+          - type: custom:mushroom-chips-card
+            card_mod:
+              style: |
+                ha-card {
+                  #background: linear-gradient(to top, #607D8B, #607D8Bb3) !important;
+                  --chip-background: rgba(1,1,1, .1) !important;
+                  box-shadow: none !important; 
+                  --chip-border-radius: 10%;
+                }
+            chips:
+              - type: entity
+                entity: sensor.washer_power
+                icon: mdi:washing-machine
+                content_info: state
+              - type: entity
+                entity: sensor.d828c9d981cf_oim_status
+                icon: mdi:cube-outline
+                content_info: state
+                name: Door
+              - type: entity
+                entity: binary_sensor.grass_station_running
+                icon: mdi:sprinkler-variant
+              - type: entity
+                entity: binary_sensor.drip_station_running
+                icon: mdi:sprinkler
+            alignment: center
+          - type: custom:mushroom-chips-card
+      - type: custom:stack-in-card
+        cards:
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#back'
+            auto_close: '25000'
+            margin_top_mobile: '-20px'
+            bg_color: 'transparent '
+            margin: 7px
+          - type: picture-glance
+            title: Garden
+            camera_image: camera.ring_garden
+            camera_view: live
+            entities:
+              - entity: sensor.garden_info
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - type: divider
+          - type: picture-glance
+            title: byard
+            camera_image: camera.192_168_254_32
+            camera_view: live
+            entities:
+              - entity: binary_sensor.back_motion
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - type: divider
+          - type: picture-glance
+            title: patio
+            camera_image: camera.192_168_254_156
+            camera_view: live
+            entities:
+              - entity: binary_sensor.patio_motion
+        style: |
+          ha-card {
+          border-radius: 25px;
+          border-width: 2px;
+          border-style: solid;
+          border-color: black;
+          }
