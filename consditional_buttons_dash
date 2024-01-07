@@ -1,0 +1,34 @@
+
+
+
+
+
+              icon: mdi:fan
+              tap_action:
+                action: call-service
+                service: input_select.select_option
+                service_data:
+                  entity_id: input_select.media
+                  option: fans
+              state:
+                - value: 'on'
+                  spin: true
+              styles:
+                card:
+                  - border-width: >
+                      [[[ if (states['input_select.media'].state == 'fans')
+                      return "1px";
+                           return "0px";
+                      ]]]
+                icon:
+                  - width: 32px
+                  - color: |
+                      [[[
+                        if (states['group.fans'].state == 'on')
+                         return "var(--paper-item-icon-active-color)";
+                        return "var(--paper-item-icon-color)";
+                      ]]] 
+              type: custom:button-card
+
+
+
