@@ -1,0 +1,49 @@
+
+
+
+
+
+            tap_action:
+              action: call-service
+              confirmation: true
+              service: opensprinkler.run
+              data:
+                entity_id: sensor.drip_station_status
+            double_tap_action:
+              action: call-service
+              service: opensprinkler.stop
+              data:
+                entity_id: sensor.drip_station_status
+            use_entity_picture: false
+            content_info: state
+            icon: mdi:sprinkler-variant
+          - type: entity
+            entity: sensor.washer_power
+            content_info: state
+            icon: mdi:washing-machine
+          - type: entity
+            entity: sensor.d828c9d981cf_oim_status
+            tap_action:
+              action: call-service
+              service: switch_toggle
+              confirmation: true
+              data:
+                entity_id: switch.d828c9d981cf_oim_power
+            content_info: state
+            icon: mdi:fridge-industrial-outline
+        alignment: center
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
