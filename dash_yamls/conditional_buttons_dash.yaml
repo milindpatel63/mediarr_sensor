@@ -1,0 +1,493 @@
+square: false
+columns: 2
+type: grid
+cards:
+  - type: custom:button-card
+    delayed: true
+    entity: weather.thermostat
+    tap_action:
+      action: call-service
+      service: input_select.select_option
+      service_data:
+        entity_id: input_select.media
+        option: weather
+    show_name: false
+    state_color: true
+    show_icon: true
+    styles:
+      card:
+        - margin-top: 0px;
+        - box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1) !important
+        - padding: 0%
+        - border-radius: 25px
+        - border-width: 2px
+        - border-color: black
+        - height: 140px
+      grid:
+        - grid-template-areas: '"topright i" "middleright i" "buttons buttons"'
+        - grid-template-columns: 1fr 1fr
+        - grid-template-rows: 1fr 1fr min-content
+      icon:
+        - left: 14px
+        - top: '-14px'
+        - border-radius: 50%
+        - padding: 20px
+        - background-color: >
+            [[[ if (states['input_select.media'].state == 'weather') return
+            "var(--paper-item-icon-active-color)";
+                 return "grey";
+            ]]]  
+        - width: 48px
+        - height: 48px
+      custom_fields:
+        buttons: null
+        topright:
+          - padding: 0%
+          - box-shadow: none
+        middleright:
+          - align-self: null
+          - justify-self: null
+          - padding: 0%
+          - margin-top: '-15px'
+          - margin-left: '-15px'
+        weather:
+          - position: absolute
+          - left: 40%
+          - top: 55%
+          - color: white
+          - font-size: 12px
+    custom_fields:
+      weather: |
+
+        [[[ return states['sensor.my_home_solar_power'].state + ' ' + 'w'  ]]]
+      topright:
+        card:
+          type: custom:button-card
+          entity: sensor.ambient_local_temp
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.media
+              option: therm
+          show_name: false
+          show_icon: false
+          show_state: true
+          styles:
+            card:
+              - box-shadow: none
+              - background-color: transparent
+            state:
+              - font-size: 18px
+              - color: >
+                  [[[ if (states['climate.thermostat'].state == 'off') return
+                  "white";
+                       return "var(--paper-item-icon-active-color)";
+                  ]]]
+      middleright:
+        card:
+          type: custom:button-card
+          entity: sensor.windows_decision
+          icon: mdi:window-closed
+          state_color: true
+          show_state: false
+          show_name: false
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.media
+              option: windows
+          styles:
+            card:
+              - box-shadow: none
+              - background-color: transparent
+            icon:
+              - width: 22px
+            grid:
+              - position: relative
+            custom_fields:
+              notification:
+                - position: absolute
+                - left: '-17%'
+                - top: 1%
+                - color: orange
+                - font-size: 10px
+          state:
+            - value: 'on'
+              icon: mdi:window-open
+              color: orange
+            - value: 'off'
+              icon: mdi:window-closed
+              color: var(--paper-item-icon-color)
+          custom_fields:
+            notification: |
+              [[[ 
+               if (states['group.windows'] && states['group.windows'].attributes.entity_id) {
+               const entities = states['group.windows'].attributes.entity_id;
+               const countNotOff = entities.filter(entity => states[entity] && states[entity].state !== 'off').length;
+               if (countNotOff > 0) {
+               return countNotOff;
+              } }
+               return '';
+              ]]]
+      buttons:
+        card:
+          type: custom:stack-in-card
+          mode: horizontal
+          cards:
+            - entity: cover.garage_door_2
+              show_name: false
+              icon: mdi:garage
+              tap_action:
+                action: call-service
+                service: input_select.select_option
+                service_data:
+                  entity_id: input_select.media
+                  option: garage
+              state_color: true
+              styles:
+                card:
+                  - border-width: >
+                      [[[ if (states['input_select.media'].state == 'garage')
+                      return "1px";
+                           return "0px";
+                      ]]]
+                icon:
+                  - width: 32px
+              state:
+                - value: open
+                  icon: mdi:garage-open
+                  color: orange
+                - value: closed
+                  icon: mdi:garage
+                  color: var(--paper-item-icon-color)
+              type: custom:button-card
+            - entity: group.outsidelights
+              show_name: false
+              icon: mdi:coach-lamp
+              tap_action:
+                action: call-service
+                service: input_select.select_option
+                service_data:
+                  entity_id: input_select.media
+                  option: outsidelights
+              state_color: true
+              styles:
+                card:
+                  - border-width: >
+                      [[[ if (states['input_select.media'].state ==
+                      'outsidelights') return "1px";
+                           return "0px";
+                      ]]]
+                icon:
+                  - width: 30px
+                  - color: >
+                      [[[ if (states['group.outsidelights'].state == 'on')
+                      return "var(--paper-item-icon-active-color)";
+                           return "white";
+                      ]]]
+                grid:
+                  - position: relative
+                custom_fields:
+                  notification:
+                    - position: absolute
+                    - left: 70%
+                    - top: '-5%'
+                    - color: orange
+                    - font-size: 10px
+              custom_fields:
+                notification: |
+                  [[[ 
+                   if (states['group.outsidelights'] && states['group.outsidelights'].attributes.entity_id) {
+                   const entities = states['group.outsidelights'].attributes.entity_id;
+                   const countNotOff = entities.filter(entity => states[entity] && states[entity].state !== 'off').length;
+                   if (countNotOff > 0) {
+                   return countNotOff;
+                   } }
+                   return '';
+                   ]]]
+                   
+              type: custom:button-card
+            - entity: sensor.door_lock
+              show_name: false
+              icon: mdi:door-closed-lock
+              tap_action:
+                action: call-service
+                service: input_select.select_option
+                service_data:
+                  entity_id: input_select.media
+                  option: door
+              state_color: true
+              styles:
+                card:
+                  - border-width: >
+                      [[[ if (states['input_select.media'].state == 'door')
+                      return "1px";
+                           return "0px";
+                      ]]]
+                icon:
+                  - width: 32px
+              state:
+                - value: Locked_2
+                  icon: mdi:door-closed-lock
+                  color: var(--paper-item-icon-color)
+                - value: Unlocked
+                  icon: mdi:door-closed
+                  color: var(--paper-item-icon-active-color)
+                - value: Open
+                  icon: mdi:door-open
+                  color: orange
+              type: custom:button-card
+  - type: custom:button-card
+    entity: media_player.office
+    tap_action:
+      action: call-service
+      service: input_select.select_option
+      service_data:
+        entity_id: input_select.media
+        option: server
+    show_name: false
+    show_entity_picture: false
+    show_state: false
+    show_icon: true
+    styles:
+      card:
+        - margin-top: 0px;
+        - padding: 0%
+        - border-radius: 25px
+        - border-width: 2px
+        - border-color: black
+        - border-style: null
+        - height: 140px
+      grid:
+        - grid-template-areas: '"topright i" "middleright i" "buttons buttons"'
+        - grid-template-columns: 1fr 1fr
+        - grid-template-rows: 1fr 1fr min-content
+      icon:
+        - left: 14px
+        - top: '-14px'
+        - border-radius: 50%
+        - padding: 20px
+        - background-color: |
+
+            [[[
+                    if (states['input_select.media'].state == 'server')
+                     return "var(--paper-item-icon-active-color)";
+                    return "grey";
+                  ]]] 
+        - color: |
+
+            [[[
+                    if (states['media_player.office'].state == 'playing')
+                     return "orange";
+                    return "white";
+                  ]]] 
+        - width: 48px
+        - height: 48px
+      custom_fields:
+        topright:
+          - padding: 0%
+          - box-shadow: none
+        middleright:
+          - align-self: null
+          - justify-self: null
+          - padding: 0%
+          - margin-top: '-15px'
+          - margin-left: '-15px'
+        speed:
+          - position: absolute
+          - left: 40%
+          - top: 55%
+          - color: white
+          - font-size: 12px
+    custom_fields:
+      speed: |
+        [[[
+        return states['sensor.meter_min'].state + ' ' + 'w';
+        ]]]
+      topright:
+        card:
+          type: custom:button-card
+          entity: media_player.lg_webos_smart_tv
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.media
+              option: media
+          double_tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.media
+              option: cube
+          hold_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.media
+              option: fire
+          name: media
+          show_name: false
+          show_icon: true
+          icon: mdi:remote-tv
+          show_state: false
+          styles:
+            card:
+              - box-shadow: none
+              - background-color: transparent
+            icon:
+              - width: 22px
+      middleright:
+        card:
+          type: custom:button-card
+          entity: binary_sensor.office_occupancy
+          tap_action:
+            action: call-service
+            service: input_select.select_option
+            service_data:
+              entity_id: input_select.media
+              option: occupancy
+          icon: mdi:account
+          show_name: false
+          show_icon: true
+          show_state: false
+          state_color: true
+          styles:
+            card:
+              - box-shadow: none
+              - background-color: transparent
+            icon:
+              - width: 22px
+      buttons:
+        card:
+          type: custom:stack-in-card
+          mode: horizontal
+          cards:
+            - entity: sensor.my_home_solar_power
+              show_name: false
+              icon: mdi:solar-power
+              tap_action:
+                action: call-service
+                service: input_select.select_option
+                service_data:
+                  entity_id: input_select.media
+                  option: utility
+              styles:
+                card:
+                  - border-width: >
+                      [[[ if (states['input_select.media'].state == 'utility')
+                      return "1px";
+                           return "0px";
+                      ]]]
+                icon:
+                  - width: 32px
+                  - color: |
+                      [[[
+                        if (states['sensor.meter_min'].state > 0)
+                         return "orange";
+                        return "var(--paper-item-icon-color)";
+                      ]]] 
+              type: custom:button-card
+            - entity: group.lights
+              show_name: false
+              state_color: true
+              icon: mdi:light-recessed
+              tap_action:
+                action: call-service
+                service: input_select.select_option
+                service_data:
+                  entity_id: input_select.media
+                  option: lights1
+              double_tap_action:
+                action: call-service
+                service: input_select.select_option
+                service_data:
+                  entity_id: input_select.media
+                  option: lights2
+              styles:
+                card:
+                  - border-width: |
+                      [[[
+                       if (states['input_select.media'].state === 'lights1') {
+                         return '1px';
+                       } else if (states['input_select.media'].state === 'lights2') {
+                         return '2px';
+                       } else {
+                         return '0px';
+                       }
+                      ]]]
+                icon:
+                  - width: 32px
+                  - color: |
+                      [[[
+                        if (states['group.lights'].state == 'on')
+                         return "var(--paper-item-icon-active-color)";
+                        return "var(--paper-item-icon-color)";
+                      ]]]
+                grid:
+                  - position: relative
+                custom_fields:
+                  notification1:
+                    - position: absolute
+                    - left: 70%
+                    - top: '-5%'
+                    - color: orange
+                    - font-size: 10px
+                  notification2:
+                    - position: absolute
+                    - left: 70%
+                    - top: 65%
+                    - color: orange
+                    - font-size: 10px
+              custom_fields:
+                notification1: |
+                  [[[ 
+                   if (states['group.upstairslights'] && states['group.upstairslights'].attributes.entity_id) {
+                   const entities = states['group.upstairslights'].attributes.entity_id;
+                   const countNotOff = entities.filter(entity => states[entity] && states[entity].state !== 'off').length;
+                   if (countNotOff > 0) {
+                   return countNotOff;
+                   } }
+                   return '';
+                   ]]] 
+                notification2: |
+                  [[[ 
+                   if (states['group.downstairslights'] && states['group.downstairslights'].attributes.entity_id) {
+                   const entities = states['group.downstairslights'].attributes.entity_id;
+                   const countNotOff = entities.filter(entity => states[entity] && states[entity].state !== 'off').length;
+                   if (countNotOff > 0) {
+                   return countNotOff;
+                   } }
+                   return '';
+                   ]]] 
+              type: custom:button-card
+            - entity: group.fans
+              show_name: false
+              icon: mdi:fan
+              tap_action:
+                action: call-service
+                service: input_select.select_option
+                service_data:
+                  entity_id: input_select.media
+                  option: fans
+              state:
+                - value: 'on'
+                  spin: true
+              styles:
+                card:
+                  - border-width: >
+                      [[[ if (states['input_select.media'].state == 'fans')
+                      return "1px";
+                           return "0px";
+                      ]]]
+                icon:
+                  - width: 32px
+                  - color: |
+                      [[[
+                        if (states['group.fans'].state == 'on')
+                         return "var(--paper-item-icon-active-color)";
+                        return "var(--paper-item-icon-color)";
+                      ]]] 
+              type: custom:button-card
