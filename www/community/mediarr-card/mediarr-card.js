@@ -61,7 +61,7 @@ class MediarrCard extends HTMLElement {
       this.nowPlayingSubtitle = this.querySelector('.now-playing-subtitle');
       this.progressBar = this.querySelector('.progress-bar-fill');
       this.playPauseButton = this.querySelector('.play-pause');
-      // Set up progress bar update interval
+      
       this.progressInterval = setInterval(() => {
         if (this.config.media_player_entity && hass) {
           const entity = hass.states[this.config.media_player_entity];
@@ -72,7 +72,7 @@ class MediarrCard extends HTMLElement {
         }
       }, 1000);
       
-      // Add click handler for play/pause button
+      
       if (this.playPauseButton) {
         this.playPauseButton.onclick = (e) => {
           e.stopPropagation();
@@ -89,7 +89,7 @@ class MediarrCard extends HTMLElement {
       }
       if (this.playButton) {
         this.playButton.onclick = (e) => {
-          e.stopPropagation(); // Prevent triggering the media-content click
+          e.stopPropagation(); 
           console.log('Play button clicked');
           
           if (this.selectedType === 'plex' && this.config.media_player_entity && hass) {
@@ -384,7 +384,7 @@ class MediarrCard extends HTMLElement {
     }
 
     const config = this.config;
-    // Update Now Playing section if media player is active
+    
     if (this.config.media_player_entity) {
       const entity = hass.states[this.config.media_player_entity];
       if (entity && entity.state !== 'unavailable' && entity.state !== 'idle' && entity.state !== 'off') {
@@ -392,16 +392,16 @@ class MediarrCard extends HTMLElement {
         this.nowPlayingTitle.textContent = entity.attributes.media_title || '';
         this.nowPlayingSubtitle.textContent = entity.attributes.media_series_title || '';
         
-        // Update play/pause button
+        
         this.playPauseButton.setAttribute('icon', entity.state === 'playing' ? 'mdi:pause' : 'mdi:play');
         
-        // Update progress bar if available
+        
         if (entity.attributes.media_position && entity.attributes.media_duration) {
           const progress = (entity.attributes.media_position / entity.attributes.media_duration) * 100;
           this.progressBar.style.width = `${progress}%`;
         }
         
-        // Update background if available
+        
         if (entity.attributes.entity_picture) {
           const backgroundUrl = entity.attributes.entity_picture;
           this.querySelector('.now-playing-background').style.backgroundImage = `url('${backgroundUrl}')`;
@@ -410,7 +410,7 @@ class MediarrCard extends HTMLElement {
         this.nowPlaying.classList.add('hidden');
       }
     }
-    // Update Plex content
+    
     const plexEntity = hass.states[config.plex_entity];
     if (plexEntity) {
       const plexItems = plexEntity.attributes.data || [];
@@ -426,7 +426,7 @@ class MediarrCard extends HTMLElement {
       }).join('');
     }
 
-    // Update Sonarr content
+    
     const sonarrEntity = hass.states[config.sonarr_entity];
     if (sonarrEntity) {
       const shows = sonarrEntity.attributes.data || [];
@@ -442,7 +442,7 @@ class MediarrCard extends HTMLElement {
       }).join('');
     }
 
-    // Update Radarr content
+    
     const radarrEntity = hass.states[config.radarr_entity];
     if (radarrEntity) {
       const movies = radarrEntity.attributes.data || [];
@@ -458,7 +458,7 @@ class MediarrCard extends HTMLElement {
       }).join('');
     }
 
-    // Add click handlers for media items
+    
     this.querySelectorAll('.media-item').forEach(item => {
       item.onclick = () => {
         const type = item.dataset.type;
@@ -482,18 +482,18 @@ class MediarrCard extends HTMLElement {
             break;
         }
 
-        // Update background and info
+        
         this.background.style.backgroundImage = `url('${mediaItem.fanart}')`;
         this.background.style.opacity = config.opacity || 0.7;
 
-        // Show play button only for Plex content
+        
         if (type === 'plex' && config.media_player_entity) {
           this.playButton.classList.remove('hidden');
         } else {
           this.playButton.classList.add('hidden');
         }
 
-        // Update info based on type
+        /
         if (type === 'plex') {
           const addedDate = new Date(mediaItem.added).toLocaleDateString();
           const runtime = mediaItem.runtime ? `${mediaItem.runtime} min` : '';
@@ -520,7 +520,7 @@ class MediarrCard extends HTMLElement {
           `;
         }
 
-        // Update selected states
+        
         this.querySelectorAll('.media-item').forEach(i => {
           i.classList.toggle('selected', 
             i.dataset.type === type && parseInt(i.dataset.index) === index);
@@ -528,7 +528,7 @@ class MediarrCard extends HTMLElement {
       };
     });
 
-    // Initialize with first item if nothing is selected
+   
     if (!this.background.style.backgroundImage) {
       const firstItem = this.querySelector('.media-item');
       if (firstItem) {
@@ -563,7 +563,7 @@ class MediarrCard extends HTMLElement {
   
 customElements.define('mediarr-card', MediarrCard);
 
-// Export the class for HACS
+
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "mediarr-card",
