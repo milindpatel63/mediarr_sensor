@@ -1,4 +1,4 @@
-3 Mobile oriented dashboards.
+3 Mobile oriented dashboards. (old project)
 
 ![Dashes](https://github.com/Vansmak/homeassistant/assets/16037573/e315d71b-8107-48a1-bc05-1c89008588a9)
 
