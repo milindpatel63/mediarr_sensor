@@ -17,23 +17,26 @@ copy the www folder contents to your www folder
 ```
 Restart HA
 
-requires 3 sensors in config 
+requires sensors in config 1 or all 3
 ```
-- platform: sonarr_mediarr
-  url: http://192.168.254.205:8989 #use your own of course
-  api_key: fromsonarrsettingsgeneral
-  max_items: 10 #default is 10
-
-- platform: radarr_mediarr
-  url: http://192.168.254.205:7878 #use your own of course
-  api_key: fromradarrsettingsgeneral
-  max_items: 10 #default is 10
-
-- platform: plex_mediarr
-  host: 192.168.254.205 #use your own of course
-  port: 32400
-  token: your plex token
-  max_items: 10 #default is 10
+sensor:
+  - platform: mediarr
+    plex:
+      host: localhost
+      port: 32400
+      token: your_plex_token
+      max_items: 10
+    
+    sonarr:
+      url: http://localhost:8989
+      api_key: your_sonarr_api_key
+      max_items: 10
+      days_to_check: 60
+    
+    radarr:
+      url: http://localhost:7878
+      api_key: your_radarr_api_key
+      max_items: 10
 ```
 
 Restart HA 
@@ -47,3 +50,6 @@ radarr_entity: sensor.radarr_mediarr
 media_player_entity: media_player.your plex_media_player
 
 ```
+future plans include Jellyfin and HACS
+
+Clik to play, limited right now
