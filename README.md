@@ -7,9 +7,8 @@ custom card to show upcoming sonarr and radarr and recently added to plex
 
 copy the custom_components folder to your config
 ```
-  /custom_components/plex-mediarr/*
-  /custom_components/radarr-mediarr/*
-  /custom_components/sonarr-mediarr/*
+  /custom_components/mediarr/*
+  
 ```
 copy the www folder contents to your www folder
 ```
