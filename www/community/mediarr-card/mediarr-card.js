@@ -5,21 +5,214 @@ class MediarrCard extends HTMLElement {
     this.selectedIndex = 0;
   }
 
-  set hass(hass) {
+  _formatImageUrl(url, entityType) {
+    if (!url) return '';
+    
+    // If it's already a full URL, just append Plex token if needed
+    if (url.startsWith('http')) {
+      if (entityType === 'plex' && !url.includes('X-Plex-Token')) {
+        const plexToken = this.config.plex_token;
+        if (plexToken) {
+          return `${url}${url.includes('?') ? '&' : '?'}X-Plex-Token=${plexToken}`;
+        }
+      }
+      return url;
+    }
+    
+    // Otherwise return the URL as-is for relative paths
+    return url;
+  }
+
+  async _getPlexClients(plexUrl, plexToken) {
+    // Placeholder for future client detection
+    console.log('Client detection will be implemented in a future update');
+    return [];
+}
+
+async _playOnPlexClient(plexUrl, plexToken, clientId, mediaKey) {
+    // Placeholder for future playback implementation
+    console.log('Playback will be implemented in a future update');
+    return false;
+}
+
+async _showClientSelector(mediaItem) {
+    const modal = this.querySelector('.client-modal');
+    const clientList = this.querySelector('.client-list');
+    
+    clientList.innerHTML = `
+      <div style="padding: 16px; text-align: center;">
+        <div style="opacity: 0.7; margin-bottom: 12px;">
+          Client Selection Coming Soon
+        </div>
+        <div style="font-size: 0.85em; color: var(--secondary-text-color);">
+          Direct playback functionality is under development.
+          Check back in a future update!
+        </div>
+      </div>
+    `;
+    
+    modal.classList.remove('hidden');
+}
+
+_getClientIcon(product) {
+    // Keep icon mapping for future use
+    const productMap = {
+        'Plex for Android (TV)': 'mdi:android-tv',
+        'Plex for Android': 'mdi:android',
+        'Plex for iOS': 'mdi:apple',
+        'Plex Web': 'mdi:web',
+        'Plex HTPC': 'mdi:monitor',
+        'Plex Media Player': 'mdi:play-circle',
+        'Plex for Samsung': 'mdi:television',
+        'Plex for LG': 'mdi:television',
+        'Plex for Xbox': 'mdi:xbox',
+        'Plex for PlayStation': 'mdi:playstation'
+    };
+    
+    return productMap[product] || 'mdi:play-network';
+}
+
+  async _playOnPlexClient(plexUrl, plexToken, clientId, mediaKey) {
+    try {
+      console.log('Starting playback on client:', clientId);
+      const metadataResponse = await fetch(
+        `${plexUrl}/library/metadata/${mediaKey}?X-Plex-Token=${plexToken}`
+      );
+      if (!metadataResponse.ok) throw new Error('Failed to fetch metadata');
+      
+      const metadataText = await metadataResponse.text();
+      const parser = new DOMParser();
+      const metadata = parser.parseFromString(metadataText, "text/xml");
+      const video = metadata.querySelector('Video');
+      
+      if (!video) throw new Error('Media not found');
+      
+      const playbackUrl = new URL(`${plexUrl}/player/playback/playMedia`, window.location.origin);
+      const params = new URLSearchParams({
+        'X-Plex-Token': plexToken,
+        'X-Plex-Client-Identifier': clientId,
+        'key': video.getAttribute('key'),
+        'offset': '0',
+        'machineIdentifier': video.getAttribute('machineIdentifier'),
+        'address': new URL(plexUrl).hostname,
+        'port': new URL(plexUrl).port,
+        'protocol': 'http',
+        'containerKey': `/playQueue/${Date.now()}`
+      });
+      
+      playbackUrl.search = params.toString();
+      console.log('Sending playback request to:', playbackUrl.toString());
+      
+      const playResponse = await fetch(playbackUrl.toString(), {
+        method: 'GET'
+      });
+      
+      if (playResponse.ok) {
+        console.log('Playback started successfully');
+      }
+      return playResponse.ok;
+    } catch (error) {
+      console.error('Error playing media:', error);
+      return false;
+    }
+  }
+
+  async _showClientSelector(mediaItem) {
+    const plexUrl = this._formattedPlexUrl || this.config.plex_url;
+    const plexToken = this.config.plex_token;
+    
+    if (!plexUrl || !plexToken) {
+      console.error('Plex URL or token not available');
+      return;
+    }
+    
+    const clients = await this._getPlexClients(plexUrl, plexToken);
+    const modal = this.querySelector('.client-modal');
+    const clientList = this.querySelector('.client-list');
+    
+    if (clients.length === 0) {
+      clientList.innerHTML = `
+        <div style="padding: 16px; text-align: center;">
+          <div style="opacity: 0.7; margin-bottom: 12px;">
+            Client Selection Coming Soon
+          </div>
+          <div style="font-size: 0.85em; color: var(--secondary-text-color);">
+            Direct playback functionality is under development.
+            Check back in a future update!
+          </div>
+        </div>
+      `;
+    } else {
+      clientList.innerHTML = clients.map(client => `
+        <div class="client-item" data-client-id="${client.clientId}">
+          <ha-icon class="client-item-icon" icon="${this._getClientIcon(client.product)}"></ha-icon>
+          <div class="client-item-info">
+            <div class="client-item-name">${client.name}</div>
+            <div class="client-item-details">
+              ${client.product} ${client.version}
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      this.querySelectorAll('.client-item').forEach(item => {
+        item.onclick = async () => {
+          const clientId = item.dataset.clientId;
+          const success = await this._playOnPlexClient(
+            plexUrl,
+            plexToken,
+            clientId,
+            mediaItem.key
+          );
+          
+          if (success) {
+            modal.classList.add('hidden');
+          }
+        };
+      });
+    }
+    
+    modal.classList.remove('hidden');
+  }
+
+  _getClientIcon(product) {
+    const productMap = {
+      'Plex for Android (TV)': 'mdi:android-tv',
+      'Plex for Android': 'mdi:android',
+      'Plex for iOS': 'mdi:apple',
+      'Plex Web': 'mdi:web',
+      'Plex HTPC': 'mdi:monitor',
+      'Plex Media Player': 'mdi:play-circle',
+      'Plex for Samsung': 'mdi:television',
+      'Plex for LG': 'mdi:television',
+      'Plex for Xbox': 'mdi:xbox',
+      'Plex for PlayStation': 'mdi:playstation'
+    };
+    
+    return productMap[product] || 'mdi:play-network';
+  }
+set hass(hass) {
     if (!this.content) {
       this.innerHTML = `
         <ha-card>
+          <div class="client-modal hidden">
+            <div class="client-modal-content">
+              <div class="client-modal-header">
+                <div class="client-modal-title">Select Plex Client</div>
+                <ha-icon class="client-modal-close" icon="mdi:close"></ha-icon>
+              </div>
+              <div class="client-list"></div>
+            </div>
+          </div>
+          
           <div class="now-playing hidden">
             <div class="now-playing-background"></div>
             <div class="now-playing-content">
-              <div class="now-playing-info">
-                <div class="now-playing-title"></div>
-                <div class="now-playing-subtitle"></div>
-              </div>
-              <div class="media-controls">
-                <ha-icon class="control-button play-pause" icon="mdi:play"></ha-icon>
-              </div>
-            </div>
+  <div class="now-playing-info">
+    <div class="now-playing-title"></div>
+    <div class="now-playing-subtitle"></div>
+  </div>
+</div>
             <div class="progress-bar">
               <div class="progress-bar-fill"></div>
             </div>
@@ -45,9 +238,16 @@ class MediarrCard extends HTMLElement {
             <div class="section-label">Upcoming Movies</div>
           </div>
           <div class="movie-list"></div>
+          <div class="section-header">
+            <div class="section-label">Popular on Trakt</div>
+          </div>
+          <div class="trakt-list"></div>
+          <div class="section-header">
+            <div class="section-label">Trending on TMDB</div>
+          </div>
+          <div class="tmdb-list"></div>
         </ha-card>
       `;
-
       this.card = this.querySelector('ha-card');
       this.content = this.querySelector('.media-content');
       this.background = this.querySelector('.media-background');
@@ -55,13 +255,16 @@ class MediarrCard extends HTMLElement {
       this.plexList = this.querySelector('.plex-list');
       this.showList = this.querySelector('.show-list');
       this.movieList = this.querySelector('.movie-list');
+      this.traktList = this.querySelector('.trakt-list');
+      this.tmdbList = this.querySelector('.tmdb-list');
       this.playButton = this.querySelector('.play-button');
       this.nowPlaying = this.querySelector('.now-playing');
       this.nowPlayingTitle = this.querySelector('.now-playing-title');
       this.nowPlayingSubtitle = this.querySelector('.now-playing-subtitle');
       this.progressBar = this.querySelector('.progress-bar-fill');
-      this.playPauseButton = this.querySelector('.play-pause');
       
+      
+      // Set up progress bar update interval
       this.progressInterval = setInterval(() => {
         if (this.config.media_player_entity && hass) {
           const entity = hass.states[this.config.media_player_entity];
@@ -71,68 +274,49 @@ class MediarrCard extends HTMLElement {
           }
         }
       }, 1000);
-      
-      
-      if (this.playPauseButton) {
-        this.playPauseButton.onclick = (e) => {
-          e.stopPropagation();
-          if (this.config.media_player_entity && hass) {
-            const entity = hass.states[this.config.media_player_entity];
-            if (entity) {
-              const service = entity.state === 'playing' ? 'media_pause' : 'media_play';
-              hass.callService('media_player', service, {
-                entity_id: this.config.media_player_entity
-              });
-            }
-          }
-        };
-      }
+
+     
+
+      // Add click handler for play button with client selector
       if (this.playButton) {
-        this.playButton.onclick = (e) => {
-          e.stopPropagation(); 
+        this.playButton.onclick = async (e) => {
+          e.stopPropagation();
           console.log('Play button clicked');
           
-          if (this.selectedType === 'plex' && this.config.media_player_entity && hass) {
-            console.log('Plex playback conditions met');
-            const entity = hass.states[this.config.media_player_entity];
+          if (this.selectedType === 'plex' && this.config.plex_entity) {
             const plexEntity = hass.states[this.config.plex_entity];
             
-            console.log('Media player entity:', this.config.media_player_entity);
-            console.log('Media player state:', entity);
-            console.log('Plex entity:', plexEntity);
-            
-            if (entity && plexEntity?.attributes?.data) {
+            if (plexEntity?.attributes?.data) {
               const mediaItem = plexEntity.attributes.data[this.selectedIndex];
-              console.log('Selected media item:', mediaItem);
               
               if (mediaItem?.key) {
-                console.log('Attempting to play media with key:', mediaItem.key);
-                hass.callService('media_player', 'play_media', {
-                  entity_id: this.config.media_player_entity,
-                  media_content_id: mediaItem.key,
-                  media_content_type: 'plex'
-                }).then(() => {
-                  console.log('Play media service called successfully');
-                }).catch(error => {
-                  console.error('Error calling play media service:', error);
-                });
+                await this._showClientSelector(mediaItem);
               } else {
-                console.warn('No media key found for item');
+                console.warn('No media key found for item:', mediaItem);
               }
-            } else {
-              console.warn('Media player or Plex entity not found');
             }
-          } else {
-            console.warn('Basic conditions not met:', {
-              selectedType: this.selectedType,
-              hasMediaPlayer: Boolean(this.config.media_player_entity),
-              hasHass: Boolean(hass)
-            });
           }
         };
       }
 
-      const style = document.createElement('style');
+      // Add client modal close handlers
+      const modal = this.querySelector('.client-modal');
+      const closeButton = this.querySelector('.client-modal-close');
+      
+      if (closeButton) {
+        closeButton.onclick = () => {
+          modal.classList.add('hidden');
+        };
+      }
+      
+      if (modal) {
+        modal.onclick = (e) => {
+          if (e.target === modal) {
+            modal.classList.add('hidden');
+          }
+        };
+      }
+const style = document.createElement('style');
       style.textContent = `
         ha-card {
           overflow: hidden;
@@ -214,7 +398,7 @@ class MediarrCard extends HTMLElement {
           color: var(--primary-text-color);
           text-transform: uppercase;
         }
-        .show-list, .movie-list, .plex-list {
+        .show-list, .movie-list, .plex-list, .trakt-list, .tmdb-list {
           padding: 0 8px;
           display: flex;
           gap: 6px;
@@ -379,12 +563,98 @@ class MediarrCard extends HTMLElement {
           width: 0%;
           transition: width 1s linear;
         }
+
+        /* Client Modal Styles */
+        .client-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 999;
+        }
+        
+        .client-modal.hidden {
+          display: none;
+        }
+        
+        .client-modal-content {
+          background: var(--ha-card-background, var(--card-background-color, white));
+          border-radius: var(--ha-card-border-radius, 4px);
+          width: 90%;
+          max-width: 400px;
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+        
+        .client-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px;
+          border-bottom: 1px solid var(--divider-color, rgba(0, 0, 0, 0.12));
+        }
+        
+        .client-modal-title {
+          font-size: 1.1em;
+          font-weight: 500;
+        }
+        
+        .client-modal-close {
+          cursor: pointer;
+          opacity: 0.7;
+          transition: opacity 0.2s;
+        }
+        
+        .client-modal-close:hover {
+          opacity: 1;
+        }
+        
+        .client-list {
+          padding: 8px;
+        }
+        
+        .client-item {
+          display: flex;
+          align-items: center;
+          padding: 12px;
+          cursor: pointer;
+          border-radius: 4px;
+          transition: background-color 0.2s;
+        }
+        
+        .client-item:hover {
+          background-color: var(--secondary-background-color);
+        }
+        
+        .client-item-icon {
+          margin-right: 12px;
+          --mdc-icon-size: 24px;
+        }
+        
+        .client-item-info {
+          flex: 1;
+        }
+        
+        .client-item-name {
+          font-weight: 500;
+          margin-bottom: 2px;
+        }
+        
+        .client-item-details {
+          font-size: 0.85em;
+          opacity: 0.7;
+        }
       `;
       this.appendChild(style);
     }
 
     const config = this.config;
-    
+    // Update Now Playing section if media player is active
     if (this.config.media_player_entity) {
       const entity = hass.states[this.config.media_player_entity];
       if (entity && entity.state !== 'unavailable' && entity.state !== 'idle' && entity.state !== 'off') {
@@ -393,15 +663,13 @@ class MediarrCard extends HTMLElement {
         this.nowPlayingSubtitle.textContent = entity.attributes.media_series_title || '';
         
         
-        this.playPauseButton.setAttribute('icon', entity.state === 'playing' ? 'mdi:pause' : 'mdi:play');
-        
-        
+        // Update progress bar if available
         if (entity.attributes.media_position && entity.attributes.media_duration) {
           const progress = (entity.attributes.media_position / entity.attributes.media_duration) * 100;
           this.progressBar.style.width = `${progress}%`;
         }
         
-        
+        // Update background if available
         if (entity.attributes.entity_picture) {
           const backgroundUrl = entity.attributes.entity_picture;
           this.querySelector('.now-playing-background').style.backgroundImage = `url('${backgroundUrl}')`;
@@ -410,7 +678,7 @@ class MediarrCard extends HTMLElement {
         this.nowPlaying.classList.add('hidden');
       }
     }
-    
+// Update Plex content
     const plexEntity = hass.states[config.plex_entity];
     if (plexEntity) {
       const plexItems = plexEntity.attributes.data || [];
@@ -426,7 +694,7 @@ class MediarrCard extends HTMLElement {
       }).join('');
     }
 
-    
+    // Update Sonarr content
     const sonarrEntity = hass.states[config.sonarr_entity];
     if (sonarrEntity) {
       const shows = sonarrEntity.attributes.data || [];
@@ -442,7 +710,7 @@ class MediarrCard extends HTMLElement {
       }).join('');
     }
 
-    
+    // Update Radarr content
     const radarrEntity = hass.states[config.radarr_entity];
     if (radarrEntity) {
       const movies = radarrEntity.attributes.data || [];
@@ -457,8 +725,39 @@ class MediarrCard extends HTMLElement {
         `;
       }).join('');
     }
+    // Update Trakt content
+    const traktEntity = hass.states[config.trakt_entity];
+    if (traktEntity) {
+      const traktItems = traktEntity.attributes.data?.slice(0, 10) || [];
+      this.traktList.innerHTML = traktItems.map((item, index) => {
+        let posterUrl = item.poster || `/api/placeholder/400/600`;
 
-    
+        return `
+          <div class="media-item ${this.selectedType === 'trakt' && index === this.selectedIndex ? 'selected' : ''}"
+              data-type="trakt"
+              data-index="${index}">
+            <img src="${posterUrl}" alt="${item.title}">
+            <div class="media-item-title">${item.title}</div>
+          </div>
+        `;
+      }).join('');
+    }
+    // TMDB
+    const tmdbEntity = hass.states[config.tmdb_entity];
+    if (tmdbEntity) {
+      const tmdbItems = tmdbEntity.attributes.data || [];
+      this.tmdbList.innerHTML = tmdbItems.map((item, index) => {
+        return `
+          <div class="media-item ${this.selectedType === 'tmdb' && index === this.selectedIndex ? 'selected' : ''}"
+               data-type="tmdb"
+               data-index="${index}">
+            <img src="${item.poster || '/api/placeholder/400/600'}" alt="${item.title}">
+            <div class="media-item-title">${item.title}</div>
+          </div>
+        `;
+      }).join('');
+    }
+    // Add click handlers for media items
     this.querySelectorAll('.media-item').forEach(item => {
       item.onclick = () => {
         const type = item.dataset.type;
@@ -480,20 +779,53 @@ class MediarrCard extends HTMLElement {
             entity = radarrEntity;
             mediaItem = entity.attributes.data[index];
             break;
+          case 'trakt':
+            entity = traktEntity;
+            mediaItem = entity.attributes.data[index];
+            this.info.innerHTML = `
+                <div class="title">${mediaItem.title}${mediaItem.year ? ` (${mediaItem.year})` : ''}</div>
+                <div class="details">${mediaItem.type.charAt(0).toUpperCase() + mediaItem.type.slice(1)}</div>
+                <div class="metadata">
+                  ${mediaItem.ids?.imdb ? `IMDB: ${mediaItem.ids.imdb}` : ''}
+                  ${mediaItem.ids?.tmdb ? ` | TMDB: ${mediaItem.ids.tmdb}` : ''}
+                </div>
+              `;
+            break;
+            case 'tmdb':
+              entity = tmdbEntity;
+              mediaItem = entity.attributes.data[index];
+              
+              if (mediaItem?.backdrop) {
+                this.background.style.backgroundImage = `url('${mediaItem.backdrop}')`;
+                this.background.style.opacity = config.opacity || 0.7;
+              }
+              
+              this.info.innerHTML = `
+                <div class="title">${mediaItem.title}${mediaItem.year ? ` (${mediaItem.year})` : ''}</div>
+                <div class="details">${mediaItem.type === 'movie' ? 'Movie' : 'TV Show'}</div>
+                <div class="metadata">
+                  ${mediaItem.vote_average ? `Rating: ${mediaItem.vote_average}/10` : ''}
+                  ${mediaItem.popularity ? ` | Popularity: ${Math.round(mediaItem.popularity)}` : ''}
+                </div>
+                ${mediaItem.overview ? `<div class="overview" style="margin-top: 8px; font-size: 0.9em; opacity: 0.9;">${mediaItem.overview}</div>` : ''}
+              `;
+              break;
+           }
+        // Update background and info
+        if (mediaItem?.fanart) {
+          this.background.style.backgroundImage = `url('${mediaItem.fanart}')`;
+          this.background.style.opacity = config.opacity || 0.7;
         }
-
         
-        this.background.style.backgroundImage = `url('${mediaItem.fanart}')`;
-        this.background.style.opacity = config.opacity || 0.7;
-
         
-        if (type === 'plex' && config.media_player_entity) {
+        // Show play button only for Plex content
+        if (type === 'plex') {
           this.playButton.classList.remove('hidden');
         } else {
           this.playButton.classList.add('hidden');
         }
 
-        /
+        // Update info based on type
         if (type === 'plex') {
           const addedDate = new Date(mediaItem.added).toLocaleDateString();
           const runtime = mediaItem.runtime ? `${mediaItem.runtime} min` : '';
@@ -520,7 +852,7 @@ class MediarrCard extends HTMLElement {
           `;
         }
 
-        
+        // Update selected states
         this.querySelectorAll('.media-item').forEach(i => {
           i.classList.toggle('selected', 
             i.dataset.type === type && parseInt(i.dataset.index) === index);
@@ -528,7 +860,7 @@ class MediarrCard extends HTMLElement {
       };
     });
 
-   
+    // Initialize with first item if nothing is selected
     if (!this.background.style.backgroundImage) {
       const firstItem = this.querySelector('.media-item');
       if (firstItem) {
@@ -538,10 +870,20 @@ class MediarrCard extends HTMLElement {
   }
 
   setConfig(config) {
-    if (!config.sonarr_entity && !config.radarr_entity && !config.plex_entity) {
-      throw new Error('Please define at least one of sonarr_entity, radarr_entity, or plex_entity');
+    if (!config.sonarr_entity && !config.radarr_entity && !config.plex_entity && 
+      !config.trakt_entity && !config.tmdb_entity) {
+    throw new Error('Please define at least one of sonarr_entity, radarr_entity, plex_entity, trakt_entity, or tmdb_entity');
+  }
+    
+    // Store the config
+    this.config = { ...config };
+    
+    // Store formatted plex url separately
+    if (this.config.plex_url && !this.config.plex_url.endsWith('/')) {
+      this._formattedPlexUrl = this.config.plex_url + '/';
+    } else {
+      this._formattedPlexUrl = this.config.plex_url;
     }
-    this.config = config;
   }
 
   static getStubConfig() {
@@ -549,21 +891,26 @@ class MediarrCard extends HTMLElement {
       plex_entity: 'sensor.plex_mediarr',
       sonarr_entity: 'sensor.sonarr_mediarr',
       radarr_entity: 'sensor.radarr_mediarr',
+      trakt_entity: 'sensor.trakt_mediarr',
+      tmdb_entity: 'sensor.tmdb_mediarr',
       media_player_entity: '',
+      plex_url: '',
+      plex_token: '',
       opacity: 0.7,
       blur_radius: 0
     };
   }
-    disconnectedCallback() {
-      if (this.progressInterval) {
-        clearInterval(this.progressInterval);
-      }
+
+  disconnectedCallback() {
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
     }
   }
-  
+}
+
 customElements.define('mediarr-card', MediarrCard);
 
-
+// Export the class for HACS
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "mediarr-card",
