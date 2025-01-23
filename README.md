@@ -1,67 +1,131 @@
 Support This Project If you find this project helpful, please consider supporting it. Your contributions help maintain and improve the project. Any support is greatly appreciated! ❤️ https://buymeacoffee.com/vansmak Thank you for your support!
 
-This is a media card inspired by the upcoming media card. You can use or not use the following. Plex (jellyfin will get added), Sonarr, Radarr, Trakt, TMDB. Plex section shows recently added, sonarr and radarr shows upcoming (wanted). Trakt for now is just showing popular and tmdb is weekly trending but can be set to tv, movies or all. I wanted to be able to select a Plex title and launch it to a Plex client but it's not working yet. I may also have it hide popular and trending if it's already in Plex library. Or mark them with a plex symbol. Shows that aren't already tracked with a link to add to sonarr. Same for movies and radarr. For those not into the Arr's this is still good without.![Screenshot_20250122-214951](https://github.com/user-attachments/assets/fcd18754-d6b8-4e74-b489-8d5ffb94d945)
+
+# Mediarr for Home Assistant (inspired by upcoming media card)
+
+A comprehensive media management card and integration for Home Assistant that brings together your media servers, management tools, and discovery services in one place.
+
+## Features
+
+- **Media Server Integration**
+  - Plex: View recently added content
+  - Coming Soon: Jellyfin and Emby support
+
+- **Media Management**
+  - Sonarr: View upcoming TV shows and episodes
+  - Radarr: Track upcoming movie releases
+
+- **Media Discovery**
+  - Trakt: Browse popular TV shows and movies
+  - TMDB: Explore trending content (configurable for TV, movies, or both)
+
+## Screenshots
+
+![Screenshot_20250122-214951](https://github.com/user-attachments/assets/fcd18754-d6b8-4e74-b489-8d5ffb94d945)
 ![VIEW](https://github.com/user-attachments/assets/e5eda74d-e50b-4dde-9985-45282dc99a51)
 
 
 ![Screenshot 2025-01-21 at 14-51-50 mediarr – Home Assistant](https://github.com/user-attachments/assets/4c73b44a-680a-42ea-8d2b-0d96806fb1c6)
 
+## Installation
 
-copy the custom_components folder to your config
-```
-  /custom_components/mediarr/*
-  
-```
-copy the www folder contents to your www folder
-```
-  www/community/mediarr-card/mediarr-card.js
-```
-Restart HA
+### HACS (Recommended)
+1. Add this repository to HACS
+2. Install "Mediarr" from HACS
+3. Restart Home Assistant
 
-requires sensors in config 1 or all 5
-```
+### Manual Installation
+1. Copy the `custom_components/mediarr` folder to your Home Assistant configuration directory
+2. Copy `www/community/mediarr-card/mediarr-card.js` to your HA `www` folder
+3. Restart Home Assistant
+
+## Configuration
+
+### Step 1: Configure Sensors
+Add one or more of the following sensors to your `configuration.yaml`:
+
+```yaml
 sensor:
   - platform: mediarr
-    plex:
+    plex:  # Optional
       host: localhost
       port: 32400
       token: your_plex_token
       max_items: 10
     
-    sonarr:
+    sonarr:  # Optional
       url: http://localhost:8989
       api_key: your_sonarr_api_key
       max_items: 10
       days_to_check: 60
     
-    radarr:
+    radarr:  # Optional
       url: http://localhost:7878
       api_key: your_radarr_api_key
       max_items: 10
 
-    trakt:
-      client_id: "clientid"
-      client_secret: "clientsecret"
-      tmdb_api_key: "apikey" #needrd for posters
-      trending_type: both
+    trakt:  # Optional
+      client_id: "your_client_id"
+      client_secret: "your_client_secret"
+      tmdb_api_key: "your_tmdb_api_key"  # Required for posters
+      trending_type: both  # Options: movies, shows, both
       max_items: 10
 
-    tmdb:
-      api_key: "apikey"
-      trending_type: all
+    tmdb:  # Optional
+      api_key: "your_api_key"
+      trending_type: all  # Options: movie, tv, all
       max_items: 10
 ```
 
-Restart HA 
+### Step 2: Add the Card
+Add the card to your dashboard:
 
-add card to dashboard 
-```
+```yaml
 type: custom:mediarr-card
 plex_entity: sensor.plex_mediarr
 sonarr_entity: sensor.sonarr_mediarr
 radarr_entity: sensor.radarr_mediarr
 trakt_entity: sensor.trakt_mediarr
 tmdb_entity: sensor.tmdb_mediarr
-media_player_entity: media_player.your plex_media_player
-
+media_player_entity: media_player.your_plex_player  # Optional
 ```
+
+## Options
+
+### Sensor Configuration
+- **max_items**: Number of items to display (default: 10)
+- **days_to_check**: Days to look ahead for upcoming content (Sonarr only, default: 60)
+- **trending_type**: Content type to display for Trakt and TMDB
+
+### Card Configuration
+- All entity configurations are optional - use only what you need
+- Media player entity enables playback control (coming soon)
+
+## Getting API Keys
+
+### Plex
+1. Get your Plex token from your Plex account settings
+2. More details at [Plex Support](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)
+
+### Sonarr/Radarr
+1. Go to Settings -> General
+2. Copy your API key
+
+### Trakt
+1. Create an application at [Trakt API](https://trakt.tv/oauth/applications)
+2. Get your client ID and secret
+
+### TMDB
+1. Create an account at [TMDB](https://www.themoviedb.org/)
+2. Request an API key from your account settings
+
+## Upcoming Features
+
+- Jellyfin and Emby support
+- Direct Plex playback functionality
+- Library status indicators for Trakt/TMDB content
+- Integration with Sonarr/Radarr for direct addition of new content
+
+## Contributors
+Vansmak aka Vanhacked
+
