@@ -1,0 +1,15 @@
+{
+    "domain": "mediarr",
+    "name": "Mediarr",
+    "codeowners": ["@YOUR_GITHUB_USERNAME"],
+    "dependencies": [],
+    "documentation": "https://github.com/YOUR_GITHUB_USERNAME/ha-mediarr",
+    "iot_class": "local_polling",
+    "issue_tracker": "https://github.com/YOUR_GITHUB_USERNAME/ha-mediarr/issues",
+    "requirements": [
+      "plexapi>=4.15.4",
+      "aiohttp>=3.8.0"
+    ],
+    "version": "1.0.0",
+    "integration_type": "hub"
+  }
