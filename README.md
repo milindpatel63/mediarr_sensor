@@ -21,7 +21,7 @@ A comprehensive media management card and integration for Home Assistant that br
 
 ## Screenshots
 
-![Screenshot_20250122-214951](https://github.com/user-attachments/assets/fcd18754-d6b8-4e74-b489-8d5ffb94d945)
+
 ![VIEW](https://github.com/user-attachments/assets/e5eda74d-e50b-4dde-9985-45282dc99a51)
 
 
@@ -29,15 +29,27 @@ A comprehensive media management card and integration for Home Assistant that br
 
 ## Installation
 
-### HACS (Recommended)
-1. Add this repository to HACS
-2. Install "Mediarr" from HACS
-3. Restart Home Assistant
+### HACS Installation
+1. Open HACS
+2. Go to "Integrations"
+3. Click the three dots menu and select "Custom repositories"
+4. Add this repository URL and select "Integration" as the category
+5. Click "Add"
+6. Find and install "Mediarr" from HACS
+7. Restart Home Assistant
+8. Add to Resources:
+   - Go to Settings -> Dashboards -> Resources
+   - Click "Add Resource"
+   - Enter URL: `/hacsfiles/ha-mediarr/mediarr-card.js`
+   - Select "JavaScript Module"
+   - Click "Create"
+
 
 ### Manual Installation
-1. Copy the `custom_components/mediarr` folder to your Home Assistant configuration directory
-2. Copy `www/community/mediarr-card/mediarr-card.js` to your HA `www` folder
-3. Restart Home Assistant
+1. Download the latest release
+2. Copy all contents from `custom_components/mediarr/` to `/config/custom_components/mediarr/`
+3. Copy `www/community/mediarr-card/mediarr-card.js` to `/config/www/community/mediarr-card/`
+4. Restart Home Assistant
 
 ## Configuration
 
@@ -76,9 +88,15 @@ sensor:
       trending_type: all  # Options: movie, tv, all
       max_items: 10
 ```
-
-### Step 2: Add the Card
-Add the card to your dashboard:
+### Step 2: Add to Resources
+1. Go to Settings -> Dashboards -> Resources
+2. Click "Add Resource"
+3. Enter URL: `/hacsfiles/ha-mediarr/mediarr-card.js`
+4. Select "JavaScript Module"
+5. Click "Create"
+   
+### Step 3: Add the Card
+Add the card to your dashboard:  (may need to clear cache)
 
 ```yaml
 type: custom:mediarr-card
@@ -129,3 +147,5 @@ media_player_entity: media_player.your_plex_player  # Optional
 ## Contributors
 Vansmak aka Vanhacked
 
+## License
+MIT
