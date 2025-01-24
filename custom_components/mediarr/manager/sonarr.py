@@ -11,7 +11,7 @@ from ..common.sensor import MediarrSensor
 _LOGGER = logging.getLogger(__name__)
 
 class SonarrMediarrSensor(MediarrSensor):
-    def __init__(self, session, api_key, url, max_items, days_to_check):
+    def __init__(self, session, api_key, url, max_items, days_to_check, cf_client_id, cf_client_secret):
         """Initialize the sensor."""
         super().__init__()
         self._session = session
@@ -20,6 +20,8 @@ class SonarrMediarrSensor(MediarrSensor):
         self._max_items = max_items
         self._days_to_check = days_to_check
         self._name = "Sonarr Mediarr"
+        self._cf_client_id = cf_client_id
+        self._cf_client_secret = cf_client_secret
 
     @property
     def name(self):
@@ -41,7 +43,11 @@ class SonarrMediarrSensor(MediarrSensor):
     async def async_update(self):
         """Update the sensor."""
         try:
-            headers = {'X-Api-Key': self._api_key}
+            headers = {
+                'X-Api-Key': self._api_key,
+                "CF-Access-Client-Id": self._cf_client_id,
+                "CF-Access-Client-Secret": self._cf_client_secret,
+                }
             now = datetime.now(ZoneInfo('UTC'))
             params = {
                 'start': now.strftime('%Y-%m-%d'),

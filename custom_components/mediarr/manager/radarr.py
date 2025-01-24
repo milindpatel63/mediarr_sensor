@@ -10,7 +10,7 @@ from ..common.sensor import MediarrSensor
 _LOGGER = logging.getLogger(__name__)
 
 class RadarrMediarrSensor(MediarrSensor):
-    def __init__(self, session, api_key, url, max_items):
+    def __init__(self, session, api_key, url, max_items, cf_client_id, cf_client_secret):
         """Initialize the sensor."""
         super().__init__()
         self._session = session
@@ -18,6 +18,8 @@ class RadarrMediarrSensor(MediarrSensor):
         self._url = url.rstrip('/')
         self._max_items = max_items
         self._name = "Radarr Mediarr"
+        self._cf_client_id = cf_client_id
+        self._cf_client_secret = cf_client_secret
 
     @property
     def name(self):
@@ -32,7 +34,11 @@ class RadarrMediarrSensor(MediarrSensor):
     async def async_update(self):
         """Update the sensor."""
         try:
-            headers = {'X-Api-Key': self._api_key}
+            headers = {
+                'X-Api-Key': self._api_key,
+                "CF-Access-Client-Id": self._cf_client_id,
+                "CF-Access-Client-Secret": self._cf_client_secret,
+                }
             now = datetime.now().astimezone()
 
             async with async_timeout.timeout(10):
