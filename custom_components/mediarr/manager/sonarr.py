@@ -81,7 +81,16 @@ class SonarrMediarrSensor(MediarrSensor):
                             except ValueError as e:
                                 _LOGGER.warning("Error parsing date: %s", e)
                                 continue
-
+                            fanart_url = None
+                            for f_image in series["images"]:
+                                if f_image["coverType"] == "fanart":
+                                    fanart_url = f_image["remoteUrl"]
+                                    break  # Stop searching after finding the first match
+                            poster_url = None
+                            for p_image in series["images"]:
+                                if p_image["coverType"] == "poster":
+                                    poster_url = p_image["remoteUrl"]
+                                    break  # Stop searching after finding the first match
                             series_id = series['id']
                             show_data = {
                                 'title': series['title'],
@@ -93,8 +102,8 @@ class SonarrMediarrSensor(MediarrSensor):
                                 }],
                                 'runtime': series.get('runtime', 0),
                                 'network': series.get('network', ''),
-                                'poster': f"{self._url}/api/v3/mediacover/{series['id']}/poster.jpg?apikey={self._api_key}",
-                                'fanart': f"{self._url}/api/v3/mediacover/{series['id']}/fanart.jpg?apikey={self._api_key}",
+                                'poster': poster_url,
+                                'fanart': fanart_url,
                                 'airdate': episode['airDate'],
                                 'monitored': True,
                                 'next_episode': {
