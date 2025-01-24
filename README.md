@@ -12,9 +12,9 @@ A comprehensive media management card and integration for Home Assistant that br
   - Coming Soon: Jellyfin and Emby support
 
 - **Media Management**
-  - Sonarr: View upcoming TV shows and episodes
-  - Radarr: Track upcoming movie releases
-
+  - Sonarr: View upcoming TV shows and episodes (With support for Cloudflare Access authentication via Cloudflare Service Token)
+  - Radarr: Track upcoming movie releases (With support for Cloudflare Access authentication via Cloudflare Service Token)
+  
 - **Media Discovery**
   - Trakt: Browse popular TV shows and movies
   - TMDB: Explore trending content (configurable for TV, movies, or both)
@@ -54,7 +54,7 @@ Add one or more of the following sensors to your `configuration.yaml`:
 sensor:
   - platform: mediarr
     plex:  # Optional
-      host: localhost
+      host: http://localhost
       port: 32400
       token: your_plex_token
       max_items: 10
@@ -64,11 +64,15 @@ sensor:
       api_key: your_sonarr_api_key
       max_items: 10
       days_to_check: 60
+      cf_client_id: xxx #Cloudflare Access Service Token Client ID
+      cf_client_secret: xxx #Cloudflare Access Service Token Client Secret
     
     radarr:  # Optional
       url: http://localhost:7878
       api_key: your_radarr_api_key
       max_items: 10
+      cf_client_id: xxx #Cloudflare Access Service Token Client ID
+      cf_client_secret: xxx #Cloudflare Access Service Token Client Secret
 
     trakt:  # Optional
       client_id: "your_client_id"
