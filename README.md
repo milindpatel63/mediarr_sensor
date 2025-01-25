@@ -49,9 +49,6 @@ A comprehensive media management card and integration for Home Assistant that br
 
 ### Step 1: Configure Sensors
 Add one or more of the following sensors to your `configuration.yaml`:
-### Step 1: Configure Sensors
-Add one or more of the following sensors to your `configuration.yaml`:
->>>>>>> parent of a9fdfc9 (Merge branch 'main' into cloudflare-access-support)
 
 ```yaml
 sensor:
@@ -72,46 +69,27 @@ sensor:
       url: http://localhost:7878
       api_key: your_radarr_api_key
       max_items: 10
-<<<<<<< HEAD
-    
-=======
-      cf_client_id: xxx #Cloudflare Access Service Token Client ID
-      cf_client_secret: xxx #Cloudflare Access Service Token Client Secret
 
->>>>>>> parent of a9fdfc9 (Merge branch 'main' into cloudflare-access-support)
+
     trakt:  # Optional
       client_id: "your_client_id"
       client_secret: "your_client_secret"
       tmdb_api_key: "your_tmdb_api_key"  # Required for posters
       trending_type: both  # Options: movies, shows, both
       max_items: 10
-<<<<<<< HEAD
-      trending: true      # Default endpoint
-      anticipated: true   # Optional
-      played: true        # Optional
-      watched: true       # Optional 
-      popular: true       # Optional
-    
-=======
 
->>>>>>> parent of a9fdfc9 (Merge branch 'main' into cloudflare-access-support)
+     
+
     tmdb:  # Optional
       api_key: "your_api_key"
       trending_type: all  # Options: movie, tv, all
       max_items: 10
-<<<<<<< HEAD
+
       trending: true          # Default endpoint
-      now_playing: true       # Optional
-      upcoming: true          # Optional
-      on_air: true            # Optional
-      airing_today: false     # Optional
-=======
->>>>>>> parent of a9fdfc9 (Merge branch 'main' into cloudflare-access-support)
-=======
+      
 ```
 
-### Step 3: install Mediarr-card from https://github.com/Vansmak/mediarr_card
-Add the Card
+
 ### Step 3: install Mediarr-card from https://github.com/Vansmak/mediarr_card
 Add the Card
 Add the card to your dashboard:  (may need to clear cache)
@@ -121,27 +99,10 @@ type: custom:mediarr-card
 plex_entity: sensor.plex_mediarr
 sonarr_entity: sensor.sonarr_mediarr
 radarr_entity: sensor.radarr_mediarr
-<<<<<<< HEAD
-# Granular Trakt lists (Optional)
-trakt_trending_entity: sensor.trakt_mediarr_trending
-trakt_anticipated_entity: sensor.trakt_mediarr_anticipated
-trakt_played_entity: sensor.trakt_mediarr_played
-trakt_watched_entity: sensor.trakt_mediarr_watched
-trakt_popular_entity: sensor.trakt_mediarr_popular
-# Granular TMDB lists (Optional)
-tmdb_trending_entity: sensor.tmdb_mediarr_trending
-tmdb_now_playing_entity: sensor.tmdb_mediarr_now_playing
-tmdb_upcoming_entity: sensor.tmdb_mediarr_upcoming
-tmdb_on_air_entity: sensor.tmdb_mediarr_on_air
-# Optional media player for progress tracking
-media_player_entity: media_player.your_plex_player
-=======
 trakt_entity: sensor.trakt_mediarr
 tmdb_entity: sensor.tmdb_mediarr
 media_player_entity: media_player.your_plex_player  # Optional
->>>>>>> parent of a9fdfc9 (Merge branch 'main' into cloudflare-access-support)
-trakt_entity: sensor.trakt_mediarr
-media_player_entity: media_player.your_plex_player  # Optional
+
 ```
 
 ## Options
