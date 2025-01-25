@@ -10,7 +10,7 @@ from ..common.sensor import MediarrSensor
 _LOGGER = logging.getLogger(__name__)
 
 class RadarrMediarrSensor(MediarrSensor):
-    def __init__(self, session, api_key, url, max_items):
+    def __init__(self, session, api_key, url, max_items, cf_client_id, cf_client_secret):
         """Initialize the sensor."""
         super().__init__()
         self._session = session
@@ -18,6 +18,8 @@ class RadarrMediarrSensor(MediarrSensor):
         self._url = url.rstrip('/')
         self._max_items = max_items
         self._name = "Radarr Mediarr"
+        self._cf_client_id = cf_client_id
+        self._cf_client_secret = cf_client_secret
 
     @property
     def name(self):
@@ -32,7 +34,11 @@ class RadarrMediarrSensor(MediarrSensor):
     async def async_update(self):
         """Update the sensor."""
         try:
-            headers = {'X-Api-Key': self._api_key}
+            headers = {
+                'X-Api-Key': self._api_key,
+                "CF-Access-Client-Id": self._cf_client_id,
+                "CF-Access-Client-Secret": self._cf_client_secret,
+                }
             now = datetime.now().astimezone()
 
             async with async_timeout.timeout(10):
@@ -70,12 +76,21 @@ class RadarrMediarrSensor(MediarrSensor):
                             if release_dates:
                                 release_dates.sort(key=lambda x: x[1])
                                 release_type, release_date = release_dates[0]
-
+                                fanart_url = None
+                                for f_image in movie["images"]:
+                                    if f_image["coverType"] == "fanart":
+                                        fanart_url = f_image["remoteUrl"]
+                                        break  # Stop searching after finding the first match
+                                poster_url = None
+                                for p_image in movie["images"]:
+                                    if p_image["coverType"] == "poster":
+                                        poster_url = p_image["remoteUrl"]
+                                        break  # Stop searching after finding the first match
                                 movie_data = {
                                     "title": movie["title"],
                                     "year": movie["year"],
-                                    "poster": f"{self._url}/api/v3/mediacover/{movie['id']}/poster.jpg?apikey={self._api_key}",
-                                    "fanart": f"{self._url}/api/v3/mediacover/{movie['id']}/fanart.jpg?apikey={self._api_key}",
+                                    "poster": poster_url,
+                                    "fanart": fanart_url,
                                     "overview": movie["overview"],
                                     "runtime": movie.get("runtime", 0),
                                     "monitored": True,
