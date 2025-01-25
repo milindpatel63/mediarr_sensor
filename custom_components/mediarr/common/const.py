@@ -18,3 +18,7 @@ MANAGER_TYPES = ["sonarr", "radarr"]
 
 # Discovery Types
 DISCOVERY_TYPES = ["trakt", "tmdb"]
+
+# Endpoints
+TRAKT_ENDPOINTS = ['trending', 'anticipated', 'played', 'watched', 'popular']
+TMDB_ENDPOINTS = ['trending', 'now_playing', 'upcoming', 'on_air', 'airing_today']
