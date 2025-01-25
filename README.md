@@ -47,8 +47,9 @@ A comprehensive media management card and integration for Home Assistant that br
 
 ## Configuration
 
-### Step 1: Configure Sensors
-Add one or more of the following sensors to your `configuration.yaml`:
+### Step 1: requires mediarr from https://github.com/Vansmak/mediarr_server/
+***Configure Sensors
+Add one or more of the following sensors to your `configuration.yaml` `sensors.yaml`:
 
 ```yaml
 sensor:
@@ -74,21 +75,22 @@ sensor:
       cf_client_id: xxx #Cloudflare Access Service Token Client ID
       cf_client_secret: xxx #Cloudflare Access Service Token Client Secret
 
+    
     trakt:  # Optional
       client_id: "your_client_id"
       client_secret: "your_client_secret"
       tmdb_api_key: "your_tmdb_api_key"  # Required for posters
-      trending_type: both  # Options: movies, shows, both
-      max_items: 10
-
+      trending_type: both  # 
+    
     tmdb:  # Optional
       api_key: "your_api_key"
       trending_type: all  # Options: movie, tv, all
       max_items: 10
+      
 ```
 
-### Step 3: install Mediarr-card from https://github.com/Vansmak/mediarr_card
-Add the Card
+   
+### Step 2: Add the Card
 Add the card to your dashboard:  (may need to clear cache)
 
 ```yaml
@@ -96,10 +98,14 @@ type: custom:mediarr-card
 plex_entity: sensor.plex_mediarr
 sonarr_entity: sensor.sonarr_mediarr
 radarr_entity: sensor.radarr_mediarr
+)
 trakt_entity: sensor.trakt_mediarr
-tmdb_entity: sensor.tmdb_mediarr
-media_player_entity: media_player.your_plex_player  # Optional
+
+tmdb__entity: sensor.tmdb_mediarr
+
+media_player_entity: media_player.your_plex_player
 ```
+Note: Not all endpoints may be functional depending on the current implementation of the Mediarr server. Always check the latest documentation and server capabilities.
 
 ## Options
 
