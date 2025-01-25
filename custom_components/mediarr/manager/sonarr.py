@@ -11,7 +11,7 @@ from ..common.sensor import MediarrSensor
 _LOGGER = logging.getLogger(__name__)
 
 class SonarrMediarrSensor(MediarrSensor):
-    def __init__(self, session, api_key, url, max_items, days_to_check, cf_client_id, cf_client_secret):
+    def __init__(self, session, api_key, url, max_items, days_to_check):
         """Initialize the sensor."""
         super().__init__()
         self._session = session
@@ -20,8 +20,6 @@ class SonarrMediarrSensor(MediarrSensor):
         self._max_items = max_items
         self._days_to_check = days_to_check
         self._name = "Sonarr Mediarr"
-        self._cf_client_id = cf_client_id
-        self._cf_client_secret = cf_client_secret
 
     @property
     def name(self):
@@ -43,11 +41,7 @@ class SonarrMediarrSensor(MediarrSensor):
     async def async_update(self):
         """Update the sensor."""
         try:
-            headers = {
-                'X-Api-Key': self._api_key,
-                "CF-Access-Client-Id": self._cf_client_id,
-                "CF-Access-Client-Secret": self._cf_client_secret,
-                }
+            headers = {'X-Api-Key': self._api_key}
             now = datetime.now(ZoneInfo('UTC'))
             params = {
                 'start': now.strftime('%Y-%m-%d'),
@@ -81,16 +75,7 @@ class SonarrMediarrSensor(MediarrSensor):
                             except ValueError as e:
                                 _LOGGER.warning("Error parsing date: %s", e)
                                 continue
-                            fanart_url = None
-                            for f_image in series["images"]:
-                                if f_image["coverType"] == "fanart":
-                                    fanart_url = f_image["remoteUrl"]
-                                    break  # Stop searching after finding the first match
-                            poster_url = None
-                            for p_image in series["images"]:
-                                if p_image["coverType"] == "poster":
-                                    poster_url = p_image["remoteUrl"]
-                                    break  # Stop searching after finding the first match
+
                             series_id = series['id']
                             show_data = {
                                 'title': series['title'],
@@ -102,8 +87,8 @@ class SonarrMediarrSensor(MediarrSensor):
                                 }],
                                 'runtime': series.get('runtime', 0),
                                 'network': series.get('network', ''),
-                                'poster': poster_url,
-                                'fanart': fanart_url,
+                                'poster': f"{self._url}/api/v3/mediacover/{series['id']}/poster.jpg?apikey={self._api_key}",
+                                'fanart': f"{self._url}/api/v3/mediacover/{series['id']}/fanart.jpg?apikey={self._api_key}",
                                 'airdate': episode['airDate'],
                                 'monitored': True,
                                 'next_episode': {

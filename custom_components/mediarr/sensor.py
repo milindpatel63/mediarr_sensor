@@ -30,9 +30,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             config["sonarr"]["api_key"],
             config["sonarr"]["url"],
             config["sonarr"].get("max_items", DEFAULT_MAX_ITEMS),
-            config["sonarr"].get("days_to_check", DEFAULT_DAYS),
-            config["sonarr"]["cf_client_id"],
-            config["sonarr"]["cf_client_secret"]
+            config["sonarr"].get("days_to_check", DEFAULT_DAYS)
         ))
 
     if "radarr" in config:
@@ -41,9 +39,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             session,
             config["radarr"]["api_key"],
             config["radarr"]["url"],
-            config["radarr"].get("max_items", DEFAULT_MAX_ITEMS),
-            config["radarr"]["cf_client_id"],
-            config["radarr"]["cf_client_secret"]
+            config["radarr"].get("max_items", DEFAULT_MAX_ITEMS)
         ))
 
     # Discovery Sensors

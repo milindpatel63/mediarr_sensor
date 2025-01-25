@@ -12,7 +12,7 @@ from ..common.sensor import MediarrSensor
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_HOST = 'http://localhost'
+DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 32400
 
 PLEX_SCHEMA = {
@@ -46,7 +46,7 @@ class PlexMediarrSensor(MediarrSensor):
     async def create_sensors(cls, hass, config):
         """Create Plex sensor entities."""
         try:
-            base_url = f"{config[CONF_HOST]}:{config[CONF_PORT]}"
+            base_url = f"http://{config[CONF_HOST]}:{config[CONF_PORT]}"
             server = await hass.async_add_executor_job(
                 lambda: PlexServer(base_url, config[CONF_TOKEN])
             )
