@@ -49,6 +49,8 @@ A comprehensive media management card and integration for Home Assistant that br
 
 ### Step 1: Configure Sensors
 Add one or more of the following sensors to your `configuration.yaml`:
+### Step 1: Configure Sensors
+Add one or more of the following sensors to your `configuration.yaml`:
 
 ```yaml
 sensor:
@@ -106,6 +108,8 @@ sensor:
 >>>>>>> parent of a9fdfc9 (Merge branch 'main' into cloudflare-access-support)
 ```
 
+### Step 3: install Mediarr-card from https://github.com/Vansmak/mediarr_card
+Add the Card
 ### Step 3: install Mediarr-card from https://github.com/Vansmak/mediarr_card
 Add the Card
 Add the card to your dashboard:  (may need to clear cache)
