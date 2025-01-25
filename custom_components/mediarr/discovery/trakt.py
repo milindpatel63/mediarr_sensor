@@ -6,25 +6,16 @@ from ..common.sensor import MediarrSensor
 
 _LOGGER = logging.getLogger(__name__)
 
-TRAKT_ENDPOINTS = {
-    'trending': 'trending',
-    'anticipated': 'anticipated',
-    'played': 'played',
-    'watched': 'watched',
-    'popular': 'popular'
-}
-
 class TraktMediarrSensor(MediarrSensor):
-    def __init__(self, session, client_id, client_secret, endpoint='trending', media_type='both', max_items=10, tmdb_api_key=None):
+    def __init__(self, session, client_id, client_secret, trending_type, max_items, tmdb_api_key):
         super().__init__()
         self._session = session
         self._client_id = client_id
         self._client_secret = client_secret
-        self._endpoint = endpoint
-        self._media_type = media_type
+        self._trending_type = trending_type
         self._max_items = max_items
         self._tmdb_api_key = tmdb_api_key
-        self._name = f"Trakt Mediarr {endpoint.replace('_', ' ').title()}"
+        self._name = "Trakt Mediarr"
         self._access_token = None
         self._headers = {
             'Content-Type': 'application/json',
@@ -38,7 +29,7 @@ class TraktMediarrSensor(MediarrSensor):
 
     @property
     def unique_id(self):
-        return f"trakt_mediarr_{self._endpoint}_{self._media_type}"
+        return f"trakt_mediarr_{self._trending_type}"
 
     async def _get_access_token(self):
         try:
@@ -58,43 +49,33 @@ class TraktMediarrSensor(MediarrSensor):
                     self._access_token = token_data.get('access_token')
                     if self._access_token:
                         self._headers['Authorization'] = f'Bearer {self._access_token}'
+                        self._available = True
                         return True
                 return False
         except Exception as err:
             _LOGGER.error("Error getting Trakt access token: %s", err)
             return False
 
-    async def _fetch_trakt_data(self, media_type):
+    async def _fetch_popular(self, media_type):
         try:
-            endpoint = TRAKT_ENDPOINTS.get(self._endpoint, 'trending')
             params = {'limit': self._max_items}
             
-            if self._endpoint in ['played', 'watched']:
-                params['period'] = 'weekly'
-            
             async with self._session.get(
-                f"https://api.trakt.tv/{media_type}/{endpoint}",
+                f"https://api.trakt.tv/{media_type}/popular",
                 headers=self._headers,
                 params=params
             ) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    # Handle different response structures
-                    if self._endpoint in ['trending', 'anticipated']:
-                        return [item[media_type.rstrip('s')] for item in data]
-                    return data
+                    return await response.json()
                 elif response.status in [401, 403]:
                     if await self._get_access_token():
-                        return await self._fetch_trakt_data(media_type)
+                        return await self._fetch_popular(media_type)
                 return []
         except Exception as err:
-            _LOGGER.error("Error fetching Trakt %s data: %s", self._endpoint, err)
+            _LOGGER.error("Error fetching Trakt %s: %s", media_type, err)
             return []
 
     async def _fetch_tmdb_data(self, tmdb_id, media_type):
-        if not self._tmdb_api_key:
-            return {}
-            
         try:
             endpoint = 'tv' if media_type == 'show' else 'movie'
             headers = {
@@ -132,7 +113,7 @@ class TraktMediarrSensor(MediarrSensor):
                 'trakt_id': item.get('ids', {}).get('trakt')
             }
 
-            if self._tmdb_api_key and base_item['tmdb_id']:
+            if base_item['tmdb_id']:
                 tmdb_data = await self._fetch_tmdb_data(base_item['tmdb_id'], media_type)
                 base_item.update(tmdb_data)
 
@@ -144,33 +125,38 @@ class TraktMediarrSensor(MediarrSensor):
     async def async_update(self):
         try:
             if not self._access_token and not await self._get_access_token():
-                self._state = 0
+                self._state = None
                 self._attributes = {}
                 self._available = False
                 return
 
             all_items = []
             
-            if self._media_type in ['shows', 'both']:
-                shows = await self._fetch_trakt_data('shows')
+            if self._trending_type in ['shows', 'both']:
+                shows = await self._fetch_popular('shows')
                 for item in shows:
                     processed = await self._process_item(item, 'show')
                     if processed:
                         all_items.append(processed)
             
-            if self._media_type in ['movies', 'both']:
-                movies = await self._fetch_trakt_data('movies')
+            if self._trending_type in ['movies', 'both']:
+                movies = await self._fetch_popular('movies')
                 for item in movies:
                     processed = await self._process_item(item, 'movie')
                     if processed:
                         all_items.append(processed)
             
-            self._state = len(all_items)
-            self._attributes = {'data': all_items[:self._max_items]}
-            self._available = True
+            if all_items:
+                self._state = len(all_items)
+                self._attributes = {'data': all_items}
+                self._available = True
+            else:
+                self._state = 0
+                self._attributes = {'data': []}
+                self._available = False
 
         except Exception as err:
             _LOGGER.error("Error updating Trakt sensor: %s", err)
-            self._state = 0
+            self._state = None
             self._attributes = {'data': []}
             self._available = False
