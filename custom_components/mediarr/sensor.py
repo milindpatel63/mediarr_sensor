@@ -3,7 +3,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
+from custom_components.mediarr.discovery.tmdb import TMDB_ENDPOINTS
 from custom_components.mediarr.common.const import (
     CONF_MAX_ITEMS, 
     CONF_DAYS, 
@@ -49,32 +49,20 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             session,
             config["trakt"]["client_id"],
             config["trakt"]["client_secret"],
-            
-            config["trakt"].get("media_type", "both"),
+            config["trakt"].get("trending_type", "both"),
             config["trakt"].get("max_items", DEFAULT_MAX_ITEMS),
-            config["trakt"].get("tmdb_api_key")
+            config["trakt"]["tmdb_api_key"]
         ))
 
     if "tmdb" in config:
-        from .discovery.tmdb import TMDBMediarrSensor, TMDB_ENDPOINTS
-        tmdb_config = config["tmdb"]
-
-        # Add default trending sensor
-        sensors.append(TMDBMediarrSensor(
-            session,
-            tmdb_config["api_key"],
-            tmdb_config.get("max_items", DEFAULT_MAX_ITEMS)
-        ))
-
-        # Add additional endpoints if configured
-        for endpoint in TMDB_ENDPOINTS:
-            if endpoint != 'trending' and tmdb_config.get(endpoint, False):
-                sensors.append(TMDBMediarrSensor(
-                    session,
-                    tmdb_config["api_key"],
-                    tmdb_config.get("max_items", DEFAULT_MAX_ITEMS),
-                    endpoint=endpoint
-                ))
+        from .discovery.tmdb import TMDBMediarrSensor
+        for endpoint in TMDB_ENDPOINTS.keys():
+            sensors.append(TMDBMediarrSensor(
+                session,
+                config["tmdb"]["api_key"],
+                config["tmdb"].get("max_items", DEFAULT_MAX_ITEMS),
+                endpoint
+            ))
 
     if sensors:
         async_add_entities(sensors, True)
