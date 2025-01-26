@@ -4,5 +4,5 @@
   "version": "1.0-initial",
   "documentation": "https://github.com/vansmak/mediarr_sensor",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/yourusernamevansmak/mediarr_sensor/issues"
+  "issue_tracker": "https://github.com/vansmak/mediarr_sensor/issues"
 }
