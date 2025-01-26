@@ -69,43 +69,30 @@ sensor:
       url: http://localhost:7878
       api_key: your_radarr_api_key
       max_items: 10
-
-
+    
     trakt:  # Optional
       client_id: "your_client_id"
       client_secret: "your_client_secret"
       tmdb_api_key: "your_tmdb_api_key"  # Required for posters
       trending_type: both  # Options: movies, shows, both
       max_items: 10
-
      
-
+    
     tmdb:  # Optional
       api_key: "your_api_key"
       trending_type: all  # Options: movie, tv, all
       max_items: 10
-
       trending: true          # Default endpoint
-      
+      now_playing: true       # Optional
+      upcoming: true          # Optional
+      on_air: true            # Optional
+      airing_today: false     # Optional
 ```
 
 
 ### Step 3: install Mediarr-card from https://github.com/Vansmak/mediarr_card
 Add the Card
-Add the card to your dashboard:  (may need to clear cache)
 
-```yaml
-type: custom:mediarr-card
-plex_entity: sensor.plex_mediarr
-sonarr_entity: sensor.sonarr_mediarr
-radarr_entity: sensor.radarr_mediarr
-trakt_entity: sensor.trakt_mediarr
-tmdb_entity: sensor.tmdb_mediarr
-media_player_entity: media_player.your_plex_player  # Optional
-
-```
-
-## Options
 
 ### Sensor Configuration
 - **max_items**: Number of items to display (default: 10)
