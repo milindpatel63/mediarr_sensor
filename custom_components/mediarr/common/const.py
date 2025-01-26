@@ -20,6 +20,5 @@ MANAGER_TYPES = ["sonarr", "radarr"]
 DISCOVERY_TYPES = ["trakt", "tmdb"]
 
 # Endpoints
-# Endpoints removed
+
 TRAKT_ENDPOINTS = []
-TMDB_ENDPOINTS = []
