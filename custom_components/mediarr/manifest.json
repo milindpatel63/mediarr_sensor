@@ -1,10 +1,10 @@
 {
   "domain": "mediarr",
   "name": "Mediarr",
-  "documentation": "https://github.com/yourusername/ha-mediarr",
-  "issue_tracker": "https://github.com/yourusername/ha-mediarr/issues",
+  "documentation": "https://github.com/vansmak/mediarr_sensor",
+  "issue_tracker": "https://github.com/vansmak/mediarr_sensor/issues",
   "dependencies": [],
-  "codeowners": ["@yourusername"],
+  "codeowners": ["@vansmak"],
   "requirements": [
     "aiohttp>=3.8.1",
     "aiofiles>=0.8.0"
