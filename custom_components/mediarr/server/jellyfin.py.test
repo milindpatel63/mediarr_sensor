@@ -1,0 +1,250 @@
+"""Jellyfin integration for Mediarr using TMDB images."""
+import logging
+import aiohttp
+import async_timeout
+import voluptuous as vol
+from homeassistant.const import CONF_TOKEN, CONF_HOST, CONF_PORT
+import homeassistant.helpers.config_validation as cv
+from ..common.const import CONF_MAX_ITEMS, DEFAULT_MAX_ITEMS
+from ..common.tmdb_sensor import TMDBMediaSensor
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+_LOGGER = logging.getLogger(__name__)
+
+DEFAULT_HOST = 'localhost'
+DEFAULT_PORT = 8096
+
+JELLYFIN_SCHEMA = {
+    vol.Required(CONF_TOKEN): cv.string,
+    vol.Required('tmdb_api_key'): cv.string,
+    vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string,
+    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+    vol.Optional(CONF_MAX_ITEMS, default=DEFAULT_MAX_ITEMS): cv.positive_int,
+}
+
+class JellyfinMediarrSensor(TMDBMediaSensor):
+    """Representation of a Jellyfin recently added sensor using TMDB images."""
+
+    def __init__(self, session, config, user_id):
+        """Initialize the sensor."""
+        super().__init__(session, config['tmdb_api_key'])
+        self._base_url = f"http://{config[CONF_HOST]}:{config[CONF_PORT]}"
+        self._jellyfin_token = config[CONF_TOKEN]
+        self._max_items = config[CONF_MAX_ITEMS]
+        self._name = "Jellyfin Mediarr"
+        self._user_id = user_id
+        self._session = session
+        self._state = 0
+        self._attributes = {'data': []}
+
+    async def _get_libraries(self):
+        """Fetch movie and TV show libraries."""
+        url = f"{self._base_url}/Users/{self._user_id}/Views"
+        headers = {
+                "Authorization": f'MediaBrowser Token="{self._jellyfin_token}"',
+                "Accept": "application/json"
+            }
+
+        libraries = {'movies': [], 'tvshows': []}
+        
+        try:
+            async with async_timeout.timeout(10):
+                async with self._session.get(url, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        for lib in data['Items']:
+                            if lib['CollectionType'] == 'movies':
+                                libraries['movies'].append(lib['Id'])
+                            elif lib['CollectionType'] == 'tvshows':
+                                libraries['tvshows'].append(lib['Id'])
+                        return libraries
+        except Exception as err:
+            _LOGGER.error("Error fetching libraries: %s", err)
+        return libraries
+
+    async def _fetch_recently_added_movies(self, library_id):
+        """Fetch recently added movies from a library."""
+        url = f"{self._base_url}/Users/{self._user_id}/Items/Latest"
+        
+        # Add logging to debug the request
+        _LOGGER.debug("Fetching movies with URL: %s, library_id: %s", url, library_id)
+        
+        params = {
+            "ParentId": library_id,
+            "Limit": self._max_items,
+            "Fields": "ProviderIds,Overview,PremiereDate,RunTimeTicks,Genres,ProductionYear",
+            "EnableImages": "true",
+            "ImageTypeLimit": 1
+        }
+        headers = {
+            "Authorization": f'MediaBrowser Token="{self._jellyfin_token}"',
+            "Accept": "application/json"
+        }
+
+        try:
+            async with async_timeout.timeout(10):
+                async with self._session.get(url, params=params, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        _LOGGER.debug("Received movie data: %s", data)
+                        return data
+                    _LOGGER.error("Failed to fetch movies. Status: %s", response.status)
+            return []
+        except Exception as err:
+            _LOGGER.error("Error fetching recent movies: %s", err)
+            return []
+
+    async def _fetch_recently_added_episodes(self, library_id):
+        """Fetch recently added episodes from a library."""
+        url = f"{self._base_url}/Users/{self._user_id}/Items/Latest"
+        params = {
+            "ParentId": library_id,
+            "Limit": self._max_items,
+            "Fields": "ProviderIds,Overview,PremiereDate,RunTimeTicks,Genres,ParentIndexNumber,IndexNumber,SeriesName,SeriesId",
+            "EnableImages": "true",
+            "ImageTypeLimit": 1,
+            "IncludeItemTypes": "Episode"
+        }
+        headers = {
+                "Authorization": f'MediaBrowser Token="{self._jellyfin_token}"',
+                "Accept": "application/json"
+            }
+
+        try:
+            async with async_timeout.timeout(10):
+                async with self._session.get(url, params=params, headers=headers) as response:
+                    if response.status == 200:
+                        return await response.json()
+        except Exception as err:
+            _LOGGER.error("Error fetching recent episodes: %s", err)
+        return []
+    async def _get_tmdb_images(self, tmdb_id, media_type='movie'):
+        """Override parent method to add logging."""
+        _LOGGER.debug("Attempting to get TMDB images for ID: %s, type: %s", tmdb_id, media_type)
+        try:
+            result = await super()._get_tmdb_images(tmdb_id, media_type)
+            if result[0] is None and result[1] is None and result[2] is None:
+                _LOGGER.error("Failed to get any TMDB images for %s", tmdb_id)
+            return result
+        except Exception as e:
+            _LOGGER.error("Error in _get_tmdb_images: %s", str(e))
+            return None, None, None
+    async def async_update(self):
+        """Update sensor data."""
+        try:
+            recently_added = []
+            
+            # Get libraries
+            libraries = await self._get_libraries()
+            
+            # Fetch recent movies
+            for movie_lib in libraries['movies']:
+                movies = await self._fetch_recently_added_movies(movie_lib)
+                for movie in movies:
+                    tmdb_id = movie.get('ProviderIds', {}).get('Tmdb')
+                    if not tmdb_id:
+                        tmdb_id = await self._search_tmdb(
+                            movie.get('Name', ''),
+                            movie.get('ProductionYear'),
+                            'movie'
+                        )
+                    
+                    if tmdb_id:
+                        poster_url, backdrop_url, main_backdrop_url = await self._get_tmdb_images(tmdb_id, 'movie')
+                        recently_added.append({
+                            'title': str(movie.get('Name', 'Unknown')),
+                            'episode': str(movie.get('Overview', 'N/A')[:100] + '...' if movie.get('Overview') else 'N/A'),
+                            'release': self._format_date(movie.get('PremiereDate')),
+                            'number': str(movie.get('ProductionYear', '')),
+                            'runtime': str(int(movie.get('RunTimeTicks', 0)) // 600000000),
+                            'genres': ', '.join(str(g) for g in movie.get('Genres', [])),
+                            'poster': str(poster_url or ""),
+                            'fanart': str(main_backdrop_url or backdrop_url or ""),
+                            'banner': str(backdrop_url or ""),
+                            'flag': 1
+                        })
+
+            # Fetch recent episodes
+            for tv_lib in libraries['tvshows']:
+                episodes = await self._fetch_recently_added_episodes(tv_lib)
+                for episode in episodes:
+                    series_id = episode.get('SeriesId')
+                    if series_id:
+                        tmdb_id = await self._search_tmdb(
+                            episode.get('SeriesName', ''),
+                            None,
+                            'tv'
+                        )
+                        
+                        if tmdb_id:
+                            poster_url, backdrop_url, main_backdrop_url = await self._get_tmdb_images(tmdb_id, 'tv')
+                            recently_added.append({
+                                'title': str(episode.get('SeriesName', '')),
+                                'episode': str(episode.get('Name', '')),
+                                'release': self._format_date(episode.get('PremiereDate')),
+                                'number': f"S{episode.get('ParentIndexNumber', 0):02d}E{episode.get('IndexNumber', 0):02d}",
+                                'runtime': str(int(episode.get('RunTimeTicks', 0)) // 600000000),
+                                'genres': ', '.join(str(g) for g in episode.get('Genres', [])),
+                                'poster': str(poster_url or ""),
+                                'fanart': str(main_backdrop_url or backdrop_url or ""),
+                                'banner': str(backdrop_url or ""),
+                                'flag': 1
+                            })
+
+            # Sort by release date and limit
+            recently_added.sort(key=lambda x: x.get('release', ''), reverse=True)
+            recently_added = recently_added[:self._max_items]
+
+            if recently_added:
+                self._state = len(recently_added)
+                self._attributes = {'data': recently_added}
+            else:
+                self._state = 0
+                self._attributes = {'data': [{
+                    'title_default': '$title',
+                    'line1_default': '$episode',
+                    'line2_default': '$release',
+                    'line3_default': '$number - $rating - $runtime',
+                    'line4_default': '$genres',
+                    'icon': 'mdi:eye-off'
+                }]}
+            
+            self._available = True
+
+        except Exception as err:
+            _LOGGER.error("Error updating Jellyfin sensor: %s", err)
+            self._state = 0
+            self._attributes = {'data': []}
+            self._available = False
+
+    @classmethod
+    async def create_sensors(cls, hass, config):
+        """Create a single Jellyfin sensor for all libraries."""
+        try:
+            base_url = f"http://{config[CONF_HOST]}:{config[CONF_PORT]}"
+            token = config[CONF_TOKEN]
+
+            # Use the same header format as other methods
+            headers = {
+                "Authorization": f'MediaBrowser Token="{token}"',
+                "Accept": "application/json"
+            }
+            
+            url = f"{base_url}/Users"
+            async with aiohttp.ClientSession() as session:
+                async with async_timeout.timeout(10):
+                    async with session.get(url, headers=headers) as response:
+                        if response.status != 200:
+                            raise Exception(f"Error fetching user info: {response.status}")
+                        users = await response.json()
+                        if not users:
+                            raise Exception("No users found")
+                        user = next((u for u in users if u.get('Policy', {}).get('IsAdministrator')), users[0])
+                        # Add dashes to the GUID
+                        user_id = f"{user['Id'][:8]}-{user['Id'][8:12]}-{user['Id'][12:16]}-{user['Id'][16:20]}-{user['Id'][20:]}"
+
+            return [cls(async_get_clientsession(hass), config, user_id)]
+
+        except Exception as error:
+            _LOGGER.error("Error initializing Jellyfin sensors: %s", error)
+            return []
