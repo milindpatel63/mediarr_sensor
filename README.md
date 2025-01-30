@@ -58,17 +58,20 @@ sensor:
       port: 32400
       token: your_plex_token
       max_items: 10
+      tmdb_api_key: "your_tmdb_api_key"  #required for tmdb version 
     
     sonarr:  # Optional
       url: http://localhost:8989
       api_key: your_sonarr_api_key
       max_items: 10
       days_to_check: 60
-    
+      tmdb_api_key: "your_tmdb_api_key"  #required for tmdb version
+
     radarr:  # Optional
       url: http://localhost:7878
       api_key: your_radarr_api_key
       max_items: 10
+      tmdb_api_key: "your_tmdb_api_key"  #required for tmdb version 
     
     trakt:  # Optional
       client_id: "your_client_id"
