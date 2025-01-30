@@ -8,8 +8,8 @@ A comprehensive media management card and integration for Home Assistant that br
 ## Features
 
 - **Media Server Integration**
-  - Plex: View recently added content
-  - Coming Soon: Jellyfin and Emby support
+  - Plex or Jellyfin(v1.5.2): View recently added content
+  
 
 - **Media Management**
   - Sonarr: View upcoming TV shows and episodes
@@ -53,10 +53,10 @@ Add one or more of the following sensors to your `configuration.yaml`:
 ```yaml
 sensor:
   - platform: mediarr
-    plex:  # Optional
+    plex/jellyfin:  # Optional
       host: localhost
-      port: 32400
-      token: your_plex_token
+      port: xxxxxx
+      token: your_token
       max_items: 10
       tmdb_api_key: "your_tmdb_api_key"  #required for tmdb version 
     
