@@ -8,13 +8,13 @@ A comprehensive media management card and integration for Home Assistant that br
 ## Features
 
 - **Media Server Integration**
-  - Plex: View recently added content
-  - Coming Soon: Jellyfin and Emby support
+  - Plex or Jellyfin(v1.5.2): View recently added content
+  
 
 - **Media Management**
-  - Sonarr: View upcoming TV shows and episodes (With support for Cloudflare Access authentication via Cloudflare Service Token)
-  - Radarr: Track upcoming movie releases (With support for Cloudflare Access authentication via Cloudflare Service Token)
-  
+  - Sonarr: View upcoming TV shows and episodes
+  - Radarr: Track upcoming movie releases
+
 - **Media Discovery**
   - Trakt: Browse popular TV shows and movies
   - TMDB: Explore trending content (configurable for TV, movies, or both)
@@ -47,67 +47,55 @@ A comprehensive media management card and integration for Home Assistant that br
 
 ## Configuration
 
-### Step 1: requires mediarr from https://github.com/Vansmak/mediarr_server/
-***Configure Sensors
-Add one or more of the following sensors to your `configuration.yaml` `sensors.yaml`:
+### Step 1: Configure Sensors
+Add one or more of the following sensors to your `configuration.yaml`:
 
 ```yaml
 sensor:
   - platform: mediarr
-    plex:  # Optional
-      host: http://localhost
-      port: 32400
-      token: your_plex_token
+    plex/jellyfin:  # Optional
+      host: localhost
+      port: xxxxxx
+      token: your_token
       max_items: 10
+      tmdb_api_key: "your_tmdb_api_key"  #required for tmdb version 
     
     sonarr:  # Optional
       url: http://localhost:8989
       api_key: your_sonarr_api_key
       max_items: 10
       days_to_check: 60
-      cf_client_id: xxx #Cloudflare Access Service Token Client ID
-      cf_client_secret: xxx #Cloudflare Access Service Token Client Secret
-    
+      tmdb_api_key: "your_tmdb_api_key"  #required for tmdb version
+
     radarr:  # Optional
       url: http://localhost:7878
       api_key: your_radarr_api_key
       max_items: 10
-      cf_client_id: xxx #Cloudflare Access Service Token Client ID
-      cf_client_secret: xxx #Cloudflare Access Service Token Client Secret
-
+      tmdb_api_key: "your_tmdb_api_key"  #required for tmdb version 
     
     trakt:  # Optional
       client_id: "your_client_id"
       client_secret: "your_client_secret"
       tmdb_api_key: "your_tmdb_api_key"  # Required for posters
-      trending_type: both  # 
+      trending_type: both  # Options: movies, shows, both
+      max_items: 10
+     
     
     tmdb:  # Optional
       api_key: "your_api_key"
       trending_type: all  # Options: movie, tv, all
       max_items: 10
-      
+      trending: true          # Default endpoint
+      now_playing: true       # Optional
+      upcoming: true          # Optional
+      on_air: true            # Optional
+      airing_today: false     # Optional
 ```
 
-   
-### Step 2: Add the Card
-Add the card to your dashboard:  (may need to clear cache)
 
-```yaml
-type: custom:mediarr-card
-plex_entity: sensor.plex_mediarr
-sonarr_entity: sensor.sonarr_mediarr
-radarr_entity: sensor.radarr_mediarr
-)
-trakt_entity: sensor.trakt_mediarr
+### Step 3: install Mediarr-card from https://github.com/Vansmak/mediarr_card
+Add the Card
 
-tmdb__entity: sensor.tmdb_mediarr
-
-media_player_entity: media_player.your_plex_player
-```
-Note: Not all endpoints may be functional depending on the current implementation of the Mediarr server. Always check the latest documentation and server capabilities.
-
-## Options
 
 ### Sensor Configuration
 - **max_items**: Number of items to display (default: 10)
